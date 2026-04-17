@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Batttle Shop Monolith
 
-## Getting Started
+Next.js full-stack TypeScript app with Prisma (PostgreSQL/Supabase), JWT auth, and role-based access control.
 
-First, run the development server:
+## Stack
+
+- Framework: Next.js (App Router)
+- Language: TypeScript
+- Backend: Next.js route handlers (`src/app/api/**`)
+- Database: PostgreSQL (Supabase)
+- ORM: Prisma
+- Auth: JWT in httpOnly cookie
+- Roles: `ADMIN` and `USER`
+- Hosting target: Vercel (single deployment)
+
+## Core Routes
+
+- Public shop: `/`
+- Login: `/login`
+- Register: `/register`
+- Profile redirect: `/profile`
+- User profile: `/me`
+- Admin dashboard: `/admin`
+
+## API Routes
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/products` (public)
+- `GET /api/profile` (authenticated)
+- `GET /api/admin/products` (admin)
+- `POST /api/admin/products` (admin)
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Configure environment variables:
+
+```bash
+cp .env.example .env
+```
+
+3. Set real values in `.env`:
+
+- `DATABASE_URL`: Supabase Postgres connection string
+- `JWT_SECRET`: long random value
+
+4. Generate Prisma client and run migrations:
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate -- --name init
+```
+
+5. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Auth Flow
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. User logs in or registers.
+2. Server signs a JWT that includes `userId`, `email`, and `role`.
+3. JWT is stored in an httpOnly cookie.
+4. `/profile` checks role and redirects:
+- `ADMIN` -> `/admin`
+- `USER` -> `/me`
+5. Protected API routes validate the JWT and enforce role checks.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scalability Path
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Phase 1: Current monolith on Next.js + Vercel
+- Phase 2: Extract API to NestJS while keeping frontend in Next.js
+- Phase 3: Add caching, queues, and microservices as scale grows

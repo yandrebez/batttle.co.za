@@ -1,0 +1,11 @@
+{
+  "landingVideoUrl": "https://www.youtube.com/watch?v=yJ_vb5NG7ZE",
+  "siteBackgroundColor": "#00ff55",
+  "discountCodes": [
+    "YANDRETEST"
+  ],
+  "discountPercent": 5,
+  "menuBackgroundColor": "#000000",
+  "headerRowColor": "#00ff55",
+  "currencyCode": "ZAR"
+}

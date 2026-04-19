@@ -75,6 +75,7 @@ type ProductFormState = {
 
 type SiteSettingsFormState = {
   landingVideoUrl: string;
+  logoUrl: string;
   siteBackgroundColor: string;
   menuBackgroundColor: string;
   headerRowColor: string;
@@ -85,6 +86,7 @@ type SiteSettingsFormState = {
 
 type StoredSiteSettings = {
   landingVideoUrl: string;
+  logoUrl: string;
   siteBackgroundColor: string;
   menuBackgroundColor: string;
   headerRowColor: string;
@@ -149,6 +151,7 @@ const initialProductForm: ProductFormState = {
 
 const initialSiteSettingsForm: SiteSettingsFormState = {
   landingVideoUrl: "",
+  logoUrl: "",
   siteBackgroundColor: "#eefaf2",
   menuBackgroundColor: "#ffffff",
   headerRowColor: "#ffffff",
@@ -299,6 +302,7 @@ export default function AdminPage() {
           setAdmins(adminsData.admins || []);
           setSiteSettingsForm({
             landingVideoUrl: settingsData.settings?.landingVideoUrl || "",
+            logoUrl: settingsData.settings?.logoUrl || "",
             siteBackgroundColor: settingsData.settings?.siteBackgroundColor || "#eefaf2",
             menuBackgroundColor: settingsData.settings?.menuBackgroundColor || "#ffffff",
             headerRowColor: settingsData.settings?.headerRowColor || "#ffffff",
@@ -638,6 +642,28 @@ export default function AdminPage() {
     }
   };
 
+  const uploadLogoImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setError("");
+    setNotice("");
+    setIsBusy(true);
+
+    try {
+      const compressed = await compressImageToDataUrl(file);
+      setSiteSettingsForm((prev) => ({ ...prev, logoUrl: compressed }));
+      setNotice("Logo uploaded. Click Save Landing Settings to publish it.");
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Logo upload failed.");
+    } finally {
+      setIsBusy(false);
+      event.target.value = "";
+    }
+  };
+
   const submitSiteSettingsForm = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
@@ -653,6 +679,7 @@ export default function AdminPage() {
         },
         body: JSON.stringify({
           landingVideoUrl: siteSettingsForm.landingVideoUrl,
+          logoUrl: siteSettingsForm.logoUrl,
           siteBackgroundColor: siteSettingsForm.siteBackgroundColor,
           menuBackgroundColor: siteSettingsForm.menuBackgroundColor,
           headerRowColor: siteSettingsForm.headerRowColor,
@@ -676,6 +703,7 @@ export default function AdminPage() {
 
       setSiteSettingsForm({
         landingVideoUrl: data.settings.landingVideoUrl || "",
+        logoUrl: data.settings.logoUrl || "",
         siteBackgroundColor: data.settings.siteBackgroundColor || "#eefaf2",
         menuBackgroundColor: data.settings.menuBackgroundColor || "#ffffff",
         headerRowColor: data.settings.headerRowColor || "#ffffff",
@@ -1100,6 +1128,37 @@ export default function AdminPage() {
                     <div className={styles.settingsSectionBody}>
                       <form className={styles.form} onSubmit={submitSiteSettingsForm}>
                         <div className={styles.formRow}>
+                          <label htmlFor="logoUpload">Upload Logo</label>
+                          <input
+                            id="logoUpload"
+                            type="file"
+                            accept="image/*"
+                            onChange={uploadLogoImage}
+                            disabled={isUploadingVideo || isBusy}
+                          />
+                          <p className={styles.muted}>Recommended: square PNG/JPG, max ~700px.</p>
+                        </div>
+
+                        <div className={styles.formRow}>
+                          <label htmlFor="logoUrl">Logo URL</label>
+                          <input
+                            id="logoUrl"
+                            type="text"
+                            placeholder="/uploads/logo.png or data:image/..."
+                            value={siteSettingsForm.logoUrl}
+                            onChange={(event) =>
+                              setSiteSettingsForm((prev) => ({ ...prev, logoUrl: event.target.value }))
+                            }
+                          />
+                        </div>
+
+                        {siteSettingsForm.logoUrl ? (
+                          <div className={styles.logoPreviewWrap}>
+                            <img src={siteSettingsForm.logoUrl} alt="Store logo preview" className={styles.logoPreview} />
+                          </div>
+                        ) : null}
+
+                        <div className={styles.formRow}>
                           <label htmlFor="landingVideoUpload">Upload Landing Video</label>
                           <input
                             id="landingVideoUpload"
@@ -1148,11 +1207,12 @@ export default function AdminPage() {
                             onClick={() =>
                               setSiteSettingsForm((prev) => ({
                                 ...prev,
+                                logoUrl: "",
                                 landingVideoUrl: "",
                               }))
                             }
                           >
-                            Clear Video URL
+                            Clear Logo & Video
                           </button>
                         </div>
                       </form>

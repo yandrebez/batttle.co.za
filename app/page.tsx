@@ -13,6 +13,13 @@ export default async function Home() {
     <main className={styles.page} style={pageStyle}>
       <section className={styles.hero}>
         <header className={styles.header}>
+          <div className={styles.logoSpot}>
+            {settings.logoUrl ? (
+              <img src={settings.logoUrl} alt="Batttle logo" className={styles.logoImage} />
+            ) : (
+              <span className={styles.logoFallback}>B</span>
+            )}
+          </div>
           <p className={styles.eyebrow}>Online Shopping, Made Easy</p>
           <h1 className={styles.title}>Battle Store</h1>
           <p className={styles.subtitle}>Fast deals, trusted brands, and a clean shopping flow from browse to checkout.</p>

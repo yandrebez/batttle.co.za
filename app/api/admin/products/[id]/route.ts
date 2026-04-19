@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       return NextResponse.json({ message: "Name, description, image, and valid price are required." }, { status: 400 });
     }
 
-    const product = await prisma.$transaction(async (tx) => {
+    const product = await prisma.$transaction(async (tx: any) => {
       // Replace all sizes: delete existing, create new
       await tx.productSize.deleteMany({ where: { productId: Number(id) } });
 

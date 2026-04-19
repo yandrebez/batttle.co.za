@@ -4,6 +4,7 @@ import { VALID_CURRENCY_CODES } from "@/lib/currency";
 
 export type SiteSettings = {
   landingVideoUrl: string;
+  logoUrl: string;
   siteBackgroundColor: string;
   discountCodes: string[];
   discountPercent: number;
@@ -14,6 +15,7 @@ export type SiteSettings = {
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   landingVideoUrl: "",
+  logoUrl: "",
   siteBackgroundColor: "#eefaf2",
   discountCodes: [],
   discountPercent: 10,
@@ -43,6 +45,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         typeof parsed.landingVideoUrl === "string"
           ? parsed.landingVideoUrl.trim()
           : DEFAULT_SITE_SETTINGS.landingVideoUrl,
+      logoUrl:
+        typeof parsed.logoUrl === "string"
+          ? parsed.logoUrl.trim()
+          : DEFAULT_SITE_SETTINGS.logoUrl,
       siteBackgroundColor: normalizeColor(parsed.siteBackgroundColor),
       discountCodes: Array.isArray(parsed.discountCodes)
         ? parsed.discountCodes
@@ -75,6 +81,10 @@ export async function updateSiteSettings(partial: Partial<SiteSettings>): Promis
       typeof partial.landingVideoUrl === "string"
         ? partial.landingVideoUrl.trim()
         : current.landingVideoUrl,
+    logoUrl:
+      typeof partial.logoUrl === "string"
+        ? partial.logoUrl.trim()
+        : current.logoUrl,
     siteBackgroundColor:
       partial.siteBackgroundColor !== undefined
         ? normalizeColor(partial.siteBackgroundColor)

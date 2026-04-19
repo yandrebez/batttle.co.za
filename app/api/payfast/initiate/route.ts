@@ -121,8 +121,14 @@ export async function POST(request: NextRequest) {
     const merchantId = process.env.PAYFAST_MERCHANT_ID ?? "";
     const merchantKey = process.env.PAYFAST_MERCHANT_KEY ?? "";
     const passphrase = process.env.PAYFAST_PASSPHRASE ?? "";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const notifyUrl = process.env.PAYFAST_NOTIFY_URL?.trim() || `${appUrl}/api/payfast/notify`;
+    const envAppUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/+$/, "");
+    const appUrl = envAppUrl || request.nextUrl.origin.replace(/\/+$/, "");
+    const rawNotifyUrl = (process.env.PAYFAST_NOTIFY_URL ?? "").trim();
+    const notifyUrl = rawNotifyUrl
+      ? rawNotifyUrl.startsWith("/")
+        ? `${appUrl}${rawNotifyUrl}`
+        : rawNotifyUrl
+      : `${appUrl}/api/payfast/notify`;
     const isSandbox = process.env.PAYFAST_SANDBOX !== "false";
 
     const payfastParams: Record<string, string> = {

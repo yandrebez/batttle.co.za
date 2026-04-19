@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       return new NextResponse("Invalid amount", { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const order = await tx.order.findUnique({
         where: { id: m_payment_id },
         select: {

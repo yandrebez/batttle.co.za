@@ -234,6 +234,24 @@
   display: block;
 }
 
+.logoPreviewWrap {
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.logoPreview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  padding: 8px;
+}
+
 .productGrid {
   display: grid;
   gap: 12px;

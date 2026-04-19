@@ -9,6 +9,7 @@ export async function GET() {
       {
         settings: {
           landingVideoUrl: settings.landingVideoUrl,
+          logoUrl: settings.logoUrl,
           siteBackgroundColor: settings.siteBackgroundColor,
           menuBackgroundColor: settings.menuBackgroundColor,
           headerRowColor: settings.headerRowColor,

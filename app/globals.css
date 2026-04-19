@@ -157,6 +157,37 @@ a {
   color: #0f172a;
 }
 
+.appTopBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.appTopLogoSpot {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d3dbe7;
+  border-radius: 8px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.appTopLogoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.appTopLogoFallback {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .menuToggle {
   border: 1px solid #d3dbe7;
   background: #ffffff;

@@ -15,11 +15,13 @@ const MENU_OPEN_KEY = "battle_menu_open";
 type ShellSettings = {
   menuBackgroundColor: string;
   headerRowColor: string;
+  logoUrl: string;
 };
 
 const defaultShellSettings: ShellSettings = {
   menuBackgroundColor: "#ffffff",
   headerRowColor: "#ffffff",
+  logoUrl: "",
 };
 
 export function AppShell({ children }: AppShellProps) {
@@ -64,7 +66,12 @@ export function AppShell({ children }: AppShellProps) {
             ? data.settings.headerRowColor
             : defaultShellSettings.headerRowColor;
 
-        setShellSettings({ menuBackgroundColor, headerRowColor });
+        const logoUrl =
+          typeof data.settings.logoUrl === "string"
+            ? data.settings.logoUrl.trim()
+            : defaultShellSettings.logoUrl;
+
+        setShellSettings({ menuBackgroundColor, headerRowColor, logoUrl });
       } catch {
         // Keep defaults on any fetch failure.
       }
@@ -119,7 +126,16 @@ export function AppShell({ children }: AppShellProps) {
             <span />
           </button>
 
-          <h1 className="appTopTitle">Batttle</h1>
+          <div className="appTopBrand">
+            <div className="appTopLogoSpot" aria-hidden="true">
+              {shellSettings.logoUrl ? (
+                <img src={shellSettings.logoUrl} alt="" className="appTopLogoImage" />
+              ) : (
+                <span className="appTopLogoFallback">B</span>
+              )}
+            </div>
+            <h1 className="appTopTitle">Batttle</h1>
+          </div>
 
           <Link href="/cart" className="topCartButton" aria-label="Cart">
             <span aria-hidden="true">🛒</span>

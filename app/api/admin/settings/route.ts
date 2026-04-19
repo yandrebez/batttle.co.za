@@ -40,6 +40,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       landingVideoUrl?: string;
+      logoUrl?: string;
       siteBackgroundColor?: string;
       discountCodes?: string[];
       discountPercent?: number;
@@ -53,6 +54,10 @@ export async function PATCH(request: NextRequest) {
 
     if (landingVideoUrl !== undefined && landingVideoUrl.length > 2000) {
       return NextResponse.json({ message: "Video URL is too long." }, { status: 400 });
+    }
+
+    if (body.logoUrl !== undefined && (typeof body.logoUrl !== "string" || body.logoUrl.trim().length > 2_000_000)) {
+      return NextResponse.json({ message: "Logo URL is invalid or too large." }, { status: 400 });
     }
 
     if (
@@ -93,6 +98,7 @@ export async function PATCH(request: NextRequest) {
 
     const settings = await updateSiteSettings({
       landingVideoUrl,
+      logoUrl: typeof body.logoUrl === "string" ? body.logoUrl.trim() : undefined,
       siteBackgroundColor: body.siteBackgroundColor,
       discountCodes: Array.isArray(body.discountCodes) ? body.discountCodes : undefined,
       discountPercent: body.discountPercent,

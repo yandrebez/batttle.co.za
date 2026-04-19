@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     orderBy: { id: "asc" },
   });
 
-  const normalizedProducts = products.map((product) => ({
+  const normalizedProducts = products.map((product: any) => ({
     ...product,
     images: Array.isArray((product as unknown as { images?: unknown }).images)
       ? ((product as unknown as { images: string[] }).images)

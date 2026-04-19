@@ -42,7 +42,7 @@ export async function GET() {
         orderBy: { id: "asc" },
       });
 
-      products = products.map((product) => ({
+      products = products.map((product: any) => ({
         ...product,
         images: Array.isArray((product as unknown as { images?: unknown }).images)
           ? ((product as unknown as { images: string[] }).images)
@@ -66,7 +66,7 @@ export async function GET() {
         orderBy: { id: "asc" },
       });
 
-      products = legacyProducts.map((product) => ({
+      products = legacyProducts.map((product: any) => ({
         ...product,
         images: [],
         hasSizes: false,

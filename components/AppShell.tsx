@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SideMenu } from "@/components/SideMenu";
 import type { CSSProperties } from "react";
+import { APP_VERSION_LABEL } from "@/lib/version";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -134,7 +135,7 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="appTopLogoFallback">B</span>
               )}
             </div>
-            <h1 className="appTopTitle">Batttle</h1>
+            <h1 className="appTopTitle">BATTTLE <span className="appVersionTag">{APP_VERSION_LABEL}</span></h1>
           </div>
 
           <Link href="/cart" className="topCartButton" aria-label="Cart">

@@ -25,6 +25,13 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum DeliveryStatus {
+  UNASSIGNED
+  ASSIGNED
+  OUT_FOR_DELIVERY
+  DELIVERED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -69,6 +76,13 @@ model Order {
   postalCode    String
   totalAmount   Float
   status        OrderStatus @default(PENDING)
+  courierCompany String?
+  courierName   String?
+  courierPhone  String?
+  trackingCode  String?
+  deliveryNotes String?
+  deliveryStatus DeliveryStatus @default(UNASSIGNED)
+  courierAssignedAt DateTime?
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -96,4 +110,13 @@ model SiteSettings {
   headerRowColor      String   @default("#ffffff")
   currencyCode        String   @default("USD")
   updatedAt           DateTime @updatedAt
+}
+
+model DiscountCode {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  percent   Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

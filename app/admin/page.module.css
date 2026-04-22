@@ -492,3 +492,37 @@
   resize: vertical;
   font-family: inherit;
 }
+
+.orderCourierGrid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.discountGridWrap {
+  overflow-x: auto;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.discountGrid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.discountGrid th,
+.discountGrid td {
+  border-bottom: 1px solid #ebf0f6;
+  text-align: left;
+  padding: 10px;
+  font-size: 0.88rem;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.discountGrid th {
+  font-weight: 700;
+  color: #0f172a;
+  background: #f8fbff;
+}

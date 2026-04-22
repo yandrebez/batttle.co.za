@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { APP_VERSION_LABEL } from "@/lib/version";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -15,13 +16,13 @@ export default async function Home() {
         <header className={styles.header}>
           <div className={styles.logoSpot}>
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt="Batttle logo" className={styles.logoImage} />
+              <img src={settings.logoUrl} alt="BATTTLE logo" className={styles.logoImage} />
             ) : (
               <span className={styles.logoFallback}>B</span>
             )}
           </div>
           <p className={styles.eyebrow}>Online Shopping, Made Easy</p>
-          <h1 className={styles.title}>Battle Store</h1>
+          <h1 className={styles.title}>BATTTLE STORE <span className={styles.versionTag}>{APP_VERSION_LABEL}</span></h1>
           <p className={styles.subtitle}>Fast deals, trusted brands, and a clean shopping flow from browse to checkout.</p>
           <div className={styles.actions}>
             <Link href="/shop" className={styles.shopButton}>

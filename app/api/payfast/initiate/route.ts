@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { buildPayFastPayload } from "@/lib/payfast";
-import { getSiteSettings } from "@/lib/siteSettings";
 
 type CartItemPayload = {
   id: number;
@@ -64,9 +63,17 @@ export async function POST(request: NextRequest) {
     let discountPercent = 0;
     const normalizedCode = typeof discountCode === "string" ? discountCode.trim().toUpperCase() : "";
     if (normalizedCode) {
-      const settings = await getSiteSettings();
-      if (settings.discountCodes.includes(normalizedCode)) {
-        discountPercent = settings.discountPercent;
+      const codeRow = await prisma.discountCode.findFirst({
+        where: {
+          code: normalizedCode,
+          isActive: true,
+        },
+        select: {
+          percent: true,
+        },
+      });
+      if (codeRow) {
+        discountPercent = codeRow.percent;
       }
     }
     const discountMultiplier = Math.max(0, Math.min(100, discountPercent)) / 100;

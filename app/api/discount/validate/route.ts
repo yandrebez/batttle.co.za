@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSiteSettings } from "@/lib/siteSettings";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code") ?? "";
@@ -9,11 +9,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ valid: false, discountPercent: 0 }, { status: 200 });
   }
 
-  const settings = await getSiteSettings();
-  const valid = settings.discountCodes.includes(normalized);
+  const codeRow = await prisma.discountCode.findFirst({
+    where: {
+      code: normalized,
+      isActive: true,
+    },
+    select: {
+      percent: true,
+    },
+  });
+
+  const valid = Boolean(codeRow);
 
   return NextResponse.json(
-    { valid, discountPercent: valid ? settings.discountPercent : 0 },
+    { valid, discountPercent: valid ? codeRow!.percent : 0 },
     { status: 200 },
   );
 }

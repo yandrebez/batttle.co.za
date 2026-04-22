@@ -42,8 +42,6 @@ export async function PATCH(request: NextRequest) {
       landingVideoUrl?: string;
       logoUrl?: string;
       siteBackgroundColor?: string;
-      discountCodes?: string[];
-      discountPercent?: number;
       menuBackgroundColor?: string;
       headerRowColor?: string;
       currencyCode?: string;
@@ -81,17 +79,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: "Header row color must be a hex value like #112233." }, { status: 400 });
     }
 
-    if (body.discountCodes !== undefined && !Array.isArray(body.discountCodes)) {
-      return NextResponse.json({ message: "Discount codes must be an array of strings." }, { status: 400 });
-    }
-
-    if (
-      body.discountPercent !== undefined &&
-      (typeof body.discountPercent !== "number" || body.discountPercent < 0 || body.discountPercent > 100)
-    ) {
-      return NextResponse.json({ message: "Discount percent must be a number between 0 and 100." }, { status: 400 });
-    }
-
     if (body.currencyCode !== undefined && !VALID_CURRENCY_CODES.has(body.currencyCode)) {
       return NextResponse.json({ message: "Invalid currency code." }, { status: 400 });
     }
@@ -100,8 +87,6 @@ export async function PATCH(request: NextRequest) {
       landingVideoUrl,
       logoUrl: typeof body.logoUrl === "string" ? body.logoUrl.trim() : undefined,
       siteBackgroundColor: body.siteBackgroundColor,
-      discountCodes: Array.isArray(body.discountCodes) ? body.discountCodes : undefined,
-      discountPercent: body.discountPercent,
       menuBackgroundColor: body.menuBackgroundColor,
       headerRowColor: body.headerRowColor,
       currencyCode: body.currencyCode,

@@ -24,9 +24,35 @@ type AdminOrder = {
   guestEmail: string | null;
   totalAmount: number;
   status: string;
+  courierCompany: string | null;
+  courierName: string | null;
+  courierPhone: string | null;
+  trackingCode: string | null;
+  deliveryNotes: string | null;
+  deliveryStatus: "UNASSIGNED" | "ASSIGNED" | "OUT_FOR_DELIVERY" | "DELIVERED";
+  courierAssignedAt: string | null;
   createdAt: string;
   user: { id: string; email: string; name: string | null } | null;
   items: Array<{ id: string; name: string; quantity: number; price: number }>;
+};
+
+type OrderDraft = {
+  status: string;
+  courierCompany: string;
+  courierName: string;
+  courierPhone: string;
+  trackingCode: string;
+  deliveryNotes: string;
+  deliveryStatus: "UNASSIGNED" | "ASSIGNED" | "OUT_FOR_DELIVERY" | "DELIVERED";
+};
+
+type DiscountCodeRow = {
+  id: number;
+  code: string;
+  percent: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type ProductSize = {
@@ -79,8 +105,6 @@ type SiteSettingsFormState = {
   siteBackgroundColor: string;
   menuBackgroundColor: string;
   headerRowColor: string;
-  discountCodesRaw: string;
-  discountPercent: number;
   currencyCode: string;
 };
 
@@ -90,14 +114,13 @@ type StoredSiteSettings = {
   siteBackgroundColor: string;
   menuBackgroundColor: string;
   headerRowColor: string;
-  discountCodes: string[];
-  discountPercent: number;
   currencyCode: string;
 };
 
 type SettingsSection = "landing" | "discounts" | "appearance" | "admins";
 
 const orderStatuses = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+const deliveryStatuses = ["UNASSIGNED", "ASSIGNED", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
 async function compressImageToDataUrl(file: File): Promise<string> {
   const source = await new Promise<string>((resolve, reject) => {
@@ -155,16 +178,22 @@ const initialSiteSettingsForm: SiteSettingsFormState = {
   siteBackgroundColor: "#eefaf2",
   menuBackgroundColor: "#ffffff",
   headerRowColor: "#ffffff",
-  discountCodesRaw: "",
-  discountPercent: 10,
   currencyCode: "USD",
 };
 
-function parseDiscountCodes(rawValue: string): string[] {
-  return rawValue
-    .split(/[,\n]/)
-    .map((value) => value.trim().toUpperCase())
-    .filter((value) => value.length > 0);
+function buildOrderDrafts(rows: AdminOrder[]): Record<string, OrderDraft> {
+  return rows.reduce<Record<string, OrderDraft>>((acc, order) => {
+    acc[order.id] = {
+      status: order.status,
+      courierCompany: order.courierCompany || "",
+      courierName: order.courierName || "",
+      courierPhone: order.courierPhone || "",
+      trackingCode: order.trackingCode || "",
+      deliveryNotes: order.deliveryNotes || "",
+      deliveryStatus: order.deliveryStatus || "UNASSIGNED",
+    };
+    return acc;
+  }, {});
 }
 
 export default function AdminPage() {
@@ -176,6 +205,10 @@ export default function AdminPage() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [orderDrafts, setOrderDrafts] = useState<Record<string, OrderDraft>>({});
+  const [discountCodes, setDiscountCodes] = useState<DiscountCodeRow[]>([]);
+  const [editingDiscountId, setEditingDiscountId] = useState<number | null>(null);
+  const [discountForm, setDiscountForm] = useState({ code: "", percent: 10, isActive: true });
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -264,7 +297,9 @@ export default function AdminPage() {
             }
             throw new Error(data.message || "Failed to load orders.");
           }
-          setOrders(data.orders || []);
+          const loadedOrders = data.orders || [];
+          setOrders(loadedOrders);
+          setOrderDrafts(buildOrderDrafts(loadedOrders));
         }
 
         if (activeTab === "products") {
@@ -298,9 +333,10 @@ export default function AdminPage() {
         }
 
         if (activeTab === "settings") {
-          const [adminsResponse, settingsResponse] = await Promise.all([
+          const [adminsResponse, settingsResponse, codesResponse] = await Promise.all([
             fetch("/api/admin/users", { headers: authHeaders }),
             fetch("/api/admin/settings", { headers: authHeaders }),
+            fetch("/api/admin/discount-codes", { headers: authHeaders }),
           ]);
 
           const adminsData = (await parseJsonSafely<{ admins?: AdminUser[]; message?: string }>(adminsResponse)) as {
@@ -330,20 +366,29 @@ export default function AdminPage() {
             throw new Error(settingsData.message || "Failed to load site settings.");
           }
 
+          const codesData = (await parseJsonSafely<{
+            codes?: DiscountCodeRow[];
+            message?: string;
+          }>(codesResponse)) as {
+            codes?: DiscountCodeRow[];
+            message?: string;
+          };
+
+          if (!codesResponse.ok) {
+            if (handleAuthFailure(codesResponse.status, codesData.message)) {
+              return;
+            }
+            throw new Error(codesData.message || "Failed to load discount codes.");
+          }
+
           setAdmins(adminsData.admins || []);
+          setDiscountCodes(codesData.codes || []);
           setSiteSettingsForm({
             landingVideoUrl: settingsData.settings?.landingVideoUrl || "",
             logoUrl: settingsData.settings?.logoUrl || "",
             siteBackgroundColor: settingsData.settings?.siteBackgroundColor || "#eefaf2",
             menuBackgroundColor: settingsData.settings?.menuBackgroundColor || "#ffffff",
             headerRowColor: settingsData.settings?.headerRowColor || "#ffffff",
-            discountCodesRaw: Array.isArray(settingsData.settings?.discountCodes)
-              ? settingsData.settings!.discountCodes.join("\n")
-              : "",
-            discountPercent:
-              typeof settingsData.settings?.discountPercent === "number"
-                ? settingsData.settings.discountPercent
-                : 10,
             currencyCode: settingsData.settings?.currencyCode || "USD",
           });
         }
@@ -619,19 +664,53 @@ export default function AdminPage() {
     }
   };
 
-  const updateOrderStatus = async (id: string, status: string) => {
+  const updateOrderDraftField = <K extends keyof OrderDraft>(id: string, key: K, value: OrderDraft[K]) => {
+    setOrderDrafts((prev) => {
+      const existing = prev[id] || {
+        status: "PENDING",
+        courierCompany: "",
+        courierName: "",
+        courierPhone: "",
+        trackingCode: "",
+        deliveryNotes: "",
+        deliveryStatus: "UNASSIGNED" as const,
+      };
+      return {
+        ...prev,
+        [id]: {
+          ...existing,
+          [key]: value,
+        },
+      };
+    });
+  };
+
+  const saveOrderDelivery = async (id: string) => {
     setError("");
     setNotice("");
     setIsBusy(true);
 
     try {
+      const draft = orderDrafts[id];
+      if (!draft) {
+        throw new Error("Order draft not found.");
+      }
+
       const response = await fetch(`/api/admin/orders/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           ...authHeaders,
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status: draft.status,
+          courierCompany: draft.courierCompany,
+          courierName: draft.courierName,
+          courierPhone: draft.courierPhone,
+          trackingCode: draft.trackingCode,
+          deliveryNotes: draft.deliveryNotes,
+          deliveryStatus: draft.deliveryStatus,
+        }),
       });
 
       const data = (await parseJsonSafely<{ order?: AdminOrder; message?: string }>(response)) as {
@@ -647,9 +726,110 @@ export default function AdminPage() {
       }
 
       setOrders((prev) => prev.map((order) => (order.id === id ? data.order! : order)));
-      setNotice("Order status updated.");
+      setOrderDrafts((prev) => ({
+        ...prev,
+        [id]: {
+          status: data.order!.status,
+          courierCompany: data.order!.courierCompany || "",
+          courierName: data.order!.courierName || "",
+          courierPhone: data.order!.courierPhone || "",
+          trackingCode: data.order!.trackingCode || "",
+          deliveryNotes: data.order!.deliveryNotes || "",
+          deliveryStatus: data.order!.deliveryStatus || "UNASSIGNED",
+        },
+      }));
+      setNotice("Order delivery updated.");
     } catch (statusError) {
-      setError(statusError instanceof Error ? statusError.message : "Order status update failed.");
+      setError(statusError instanceof Error ? statusError.message : "Order delivery update failed.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const resetDiscountForm = () => {
+    setEditingDiscountId(null);
+    setDiscountForm({ code: "", percent: 10, isActive: true });
+  };
+
+  const saveDiscountCode = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setIsBusy(true);
+
+    try {
+      const isEdit = editingDiscountId !== null;
+      const endpoint = isEdit
+        ? `/api/admin/discount-codes/${editingDiscountId}`
+        : "/api/admin/discount-codes";
+
+      const response = await fetch(endpoint, {
+        method: isEdit ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          code: discountForm.code,
+          percent: discountForm.percent,
+          isActive: discountForm.isActive,
+        }),
+      });
+
+      const payload = (await parseJsonSafely<{ code?: DiscountCodeRow; message?: string }>(response)) as {
+        code?: DiscountCodeRow;
+        message?: string;
+      };
+
+      if (!response.ok || !payload.code) {
+        if (!response.ok && handleAuthFailure(response.status, payload.message)) {
+          return;
+        }
+        throw new Error(payload.message || "Failed to save discount code.");
+      }
+
+      if (isEdit) {
+        setDiscountCodes((prev) => prev.map((row) => (row.id === payload.code!.id ? payload.code! : row)));
+      } else {
+        setDiscountCodes((prev) => [payload.code!, ...prev]);
+      }
+
+      resetDiscountForm();
+      setNotice(isEdit ? "Discount code updated." : "Discount code created.");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Discount save failed.");
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const removeDiscountCode = async (id: number) => {
+    setError("");
+    setNotice("");
+    setIsBusy(true);
+
+    try {
+      const response = await fetch(`/api/admin/discount-codes/${id}`, {
+        method: "DELETE",
+        headers: authHeaders,
+      });
+
+      const payload = (await parseJsonSafely<{ message?: string }>(response)) as { message?: string };
+
+      if (!response.ok) {
+        if (handleAuthFailure(response.status, payload.message)) {
+          return;
+        }
+        throw new Error(payload.message || "Failed to delete discount code.");
+      }
+
+      setDiscountCodes((prev) => prev.filter((row) => row.id !== id));
+      if (editingDiscountId === id) {
+        resetDiscountForm();
+      }
+      setNotice("Discount code removed.");
+    } catch (removeError) {
+      setError(removeError instanceof Error ? removeError.message : "Discount delete failed.");
     } finally {
       setIsBusy(false);
     }
@@ -738,8 +918,6 @@ export default function AdminPage() {
           siteBackgroundColor: siteSettingsForm.siteBackgroundColor,
           menuBackgroundColor: siteSettingsForm.menuBackgroundColor,
           headerRowColor: siteSettingsForm.headerRowColor,
-          discountCodes: parseDiscountCodes(siteSettingsForm.discountCodesRaw),
-          discountPercent: siteSettingsForm.discountPercent,
           currencyCode: siteSettingsForm.currencyCode,
         }),
       });
@@ -765,13 +943,6 @@ export default function AdminPage() {
         siteBackgroundColor: data.settings.siteBackgroundColor || "#eefaf2",
         menuBackgroundColor: data.settings.menuBackgroundColor || "#ffffff",
         headerRowColor: data.settings.headerRowColor || "#ffffff",
-        discountCodesRaw: Array.isArray(data.settings.discountCodes)
-          ? data.settings.discountCodes.join("\n")
-          : "",
-        discountPercent:
-          typeof data.settings.discountPercent === "number"
-            ? data.settings.discountPercent
-            : 10,
         currencyCode: data.settings.currencyCode || "USD",
       });
       setNotice("Site settings updated.");
@@ -1110,10 +1281,24 @@ export default function AdminPage() {
 
           {activeTab === "orders" ? (
             <>
-              <p className={styles.muted}>All orders in the system.</p>
+              <p className={styles.muted}>All orders in the system with courier assignment and delivery tracking.</p>
               <div className={styles.list}>
                 {orders.map((order) => (
                   <div key={order.id} className={styles.row}>
+                    {(() => {
+                      const draft =
+                        orderDrafts[order.id] || {
+                          status: order.status,
+                          courierCompany: order.courierCompany || "",
+                          courierName: order.courierName || "",
+                          courierPhone: order.courierPhone || "",
+                          trackingCode: order.trackingCode || "",
+                          deliveryNotes: order.deliveryNotes || "",
+                          deliveryStatus: order.deliveryStatus || "UNASSIGNED",
+                        };
+
+                      return (
+                        <>
                     <div className={styles.rowTop}>
                       <span className={styles.rowTitle}>Order {order.id}</span>
                       <span className={styles.meta}>{new Date(order.createdAt).toLocaleString()}</span>
@@ -1127,8 +1312,8 @@ export default function AdminPage() {
                     <div className={styles.actions}>
                       <select
                         className={styles.select}
-                        value={order.status}
-                        onChange={(event) => updateOrderStatus(order.id, event.target.value)}
+                        value={draft.status}
+                        onChange={(event) => updateOrderDraftField(order.id, "status", event.target.value)}
                       >
                         {orderStatuses.map((status) => (
                           <option key={status} value={status}>
@@ -1136,7 +1321,83 @@ export default function AdminPage() {
                           </option>
                         ))}
                       </select>
+
+                      <select
+                        className={styles.select}
+                        value={draft.deliveryStatus}
+                        onChange={(event) =>
+                          updateOrderDraftField(
+                            order.id,
+                            "deliveryStatus",
+                            event.target.value as "UNASSIGNED" | "ASSIGNED" | "OUT_FOR_DELIVERY" | "DELIVERED",
+                          )
+                        }
+                      >
+                        {deliveryStatuses.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
+                    <div className={styles.orderCourierGrid}>
+                      <div className={styles.formRow}>
+                        <label>Courier Company</label>
+                        <input
+                          type="text"
+                          value={draft.courierCompany}
+                          onChange={(event) => updateOrderDraftField(order.id, "courierCompany", event.target.value)}
+                          placeholder="FastTrack Couriers"
+                        />
+                      </div>
+                      <div className={styles.formRow}>
+                        <label>Courier Name</label>
+                        <input
+                          type="text"
+                          value={draft.courierName}
+                          onChange={(event) => updateOrderDraftField(order.id, "courierName", event.target.value)}
+                          placeholder="Driver name"
+                        />
+                      </div>
+                      <div className={styles.formRow}>
+                        <label>Courier Phone</label>
+                        <input
+                          type="text"
+                          value={draft.courierPhone}
+                          onChange={(event) => updateOrderDraftField(order.id, "courierPhone", event.target.value)}
+                          placeholder="+27..."
+                        />
+                      </div>
+                      <div className={styles.formRow}>
+                        <label>Tracking Code</label>
+                        <input
+                          type="text"
+                          value={draft.trackingCode}
+                          onChange={(event) => updateOrderDraftField(order.id, "trackingCode", event.target.value)}
+                          placeholder="TRACK123"
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.formRow}>
+                      <label>Delivery Notes</label>
+                      <textarea
+                        className={styles.textarea}
+                        value={draft.deliveryNotes}
+                        onChange={(event) => updateOrderDraftField(order.id, "deliveryNotes", event.target.value)}
+                        placeholder="Gate code, preferred time, leave at reception..."
+                      />
+                    </div>
+
+                    <div className={styles.actions}>
+                      <button type="button" className={styles.submit} onClick={() => saveOrderDelivery(order.id)}>
+                        Save Delivery Update
+                      </button>
+                    </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 ))}
                 {!orders.length && !isBusy ? <div className={styles.row}>No orders found.</div> : null}
@@ -1288,45 +1549,121 @@ export default function AdminPage() {
                   </button>
                   {openSettingsSection === "discounts" ? (
                     <div className={styles.settingsSectionBody}>
-                      <form className={styles.form} onSubmit={submitSiteSettingsForm}>
-                        <div className={styles.formRow}>
-                          <label htmlFor="discountPercent">Discount Percent (%)</label>
-                          <input
-                            id="discountPercent"
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={siteSettingsForm.discountPercent}
-                            onChange={(event) =>
-                              setSiteSettingsForm((prev) => ({
-                                ...prev,
-                                discountPercent: Math.min(100, Math.max(0, Number(event.target.value))),
-                              }))
-                            }
-                          />
-                          <p className={styles.muted}>Percentage discount applied when a valid code is used (e.g. 10 = 10% off).</p>
-                        </div>
+                      <form className={styles.form} onSubmit={saveDiscountCode}>
+                        <h3 className={styles.sectionTitle}>Discount Code Form</h3>
+                        <div className={styles.settingsColorGrid}>
+                          <div className={styles.formRow}>
+                            <label htmlFor="discountCode">Code</label>
+                            <input
+                              id="discountCode"
+                              type="text"
+                              value={discountForm.code}
+                              onChange={(event) =>
+                                setDiscountForm((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                              }
+                              placeholder="WELCOME10"
+                              required
+                            />
+                          </div>
 
-                        <div className={styles.formRow}>
-                          <label htmlFor="discountCodes">Discount Codes</label>
-                          <textarea
-                            id="discountCodes"
-                            className={styles.textarea}
-                            placeholder={"SUMMER10\nWELCOME15\nVIP25"}
-                            value={siteSettingsForm.discountCodesRaw}
-                            onChange={(event) =>
-                              setSiteSettingsForm((prev) => ({ ...prev, discountCodesRaw: event.target.value }))
-                            }
-                          />
-                          <p className={styles.muted}>Add one code per line (or comma-separated).</p>
+                          <div className={styles.formRow}>
+                            <label htmlFor="discountPercent">Percent</label>
+                            <input
+                              id="discountPercent"
+                              type="number"
+                              min={0}
+                              max={100}
+                              value={discountForm.percent}
+                              onChange={(event) =>
+                                setDiscountForm((prev) => ({
+                                  ...prev,
+                                  percent: Math.max(0, Math.min(100, Number(event.target.value))),
+                                }))
+                              }
+                              required
+                            />
+                          </div>
+
+                          <div className={styles.formRow}>
+                            <label htmlFor="discountIsActive">Status</label>
+                            <select
+                              id="discountIsActive"
+                              value={discountForm.isActive ? "active" : "inactive"}
+                              onChange={(event) =>
+                                setDiscountForm((prev) => ({ ...prev, isActive: event.target.value === "active" }))
+                              }
+                            >
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                          </div>
                         </div>
 
                         <div className={styles.formActions}>
-                          <button type="submit" className={styles.submit} disabled={isBusy || isUploadingVideo}>
-                            Save Discount Codes
+                          <button type="submit" className={styles.submit} disabled={isBusy}>
+                            {editingDiscountId ? "Update Code" : "Add Code"}
                           </button>
+                          {editingDiscountId ? (
+                            <button type="button" className={styles.btn} onClick={resetDiscountForm}>
+                              Cancel Edit
+                            </button>
+                          ) : null}
                         </div>
                       </form>
+
+                      <div className={styles.discountGridWrap}>
+                        <table className={styles.discountGrid}>
+                          <thead>
+                            <tr>
+                              <th>Code</th>
+                              <th>Percent</th>
+                              <th>Status</th>
+                              <th>Created</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {discountCodes.map((codeRow) => (
+                              <tr key={codeRow.id}>
+                                <td>{codeRow.code}</td>
+                                <td>{codeRow.percent}%</td>
+                                <td>{codeRow.isActive ? "Active" : "Inactive"}</td>
+                                <td>{new Date(codeRow.createdAt).toLocaleDateString()}</td>
+                                <td>
+                                  <div className={styles.actions}>
+                                    <button
+                                      type="button"
+                                      className={styles.btn}
+                                      onClick={() => {
+                                        setEditingDiscountId(codeRow.id);
+                                        setDiscountForm({
+                                          code: codeRow.code,
+                                          percent: codeRow.percent,
+                                          isActive: codeRow.isActive,
+                                        });
+                                      }}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={`${styles.btn} ${styles.btnDanger}`}
+                                      onClick={() => removeDiscountCode(codeRow.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {!discountCodes.length ? (
+                              <tr>
+                                <td colSpan={5}>No discount codes yet.</td>
+                              </tr>
+                            ) : null}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : null}
                 </section>

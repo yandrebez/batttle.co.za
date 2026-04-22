@@ -26,6 +26,12 @@ type Order = {
   guestEmail: string | null;
   totalAmount: number;
   status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  courierCompany: string | null;
+  courierName: string | null;
+  courierPhone: string | null;
+  trackingCode: string | null;
+  deliveryNotes: string | null;
+  deliveryStatus: "UNASSIGNED" | "ASSIGNED" | "OUT_FOR_DELIVERY" | "DELIVERED";
   items: OrderItem[];
   createdAt: string;
 };
@@ -247,6 +253,30 @@ export default function OrdersPage() {
                     {statusLabels[selectedOrder.status]}
                   </div>
                 </div>
+
+                <div className={styles.detailRow}>
+                  <span>Delivery</span>
+                  <p>{selectedOrder.deliveryStatus.replaceAll("_", " ")}</p>
+                </div>
+
+                {selectedOrder.courierCompany || selectedOrder.courierName || selectedOrder.trackingCode ? (
+                  <div className={styles.detailRow}>
+                    <span>Courier</span>
+                    <div>
+                      {selectedOrder.courierCompany ? <p>{selectedOrder.courierCompany}</p> : null}
+                      {selectedOrder.courierName ? <p>{selectedOrder.courierName}</p> : null}
+                      {selectedOrder.courierPhone ? <p>{selectedOrder.courierPhone}</p> : null}
+                      {selectedOrder.trackingCode ? <p>Tracking: {selectedOrder.trackingCode}</p> : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {selectedOrder.deliveryNotes ? (
+                  <div className={styles.detailRow}>
+                    <span>Courier Notes</span>
+                    <p>{selectedOrder.deliveryNotes}</p>
+                  </div>
+                ) : null}
 
                 <div className={styles.detailRow}>
                   <span>Order Date</span>

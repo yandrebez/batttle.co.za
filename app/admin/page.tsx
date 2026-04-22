@@ -168,7 +168,7 @@ function parseDiscountCodes(rawValue: string): string[] {
 }
 
 export default function AdminPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const currencySymbol = useCurrencySymbol();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("products");
@@ -225,6 +225,22 @@ export default function AdminPage() {
     }
   };
 
+  const handleAuthFailure = (status: number, message?: string) => {
+    if (status !== 401) {
+      return false;
+    }
+
+    const normalized = (message || "").toLowerCase();
+    if (normalized && !normalized.includes("token") && !normalized.includes("session")) {
+      return false;
+    }
+
+    logout();
+    setNotice("");
+    setError("Your session expired. Please sign in again.");
+    return true;
+  };
+
   useEffect(() => {
     if (!token || user?.role !== "ADMIN") {
       return;
@@ -243,6 +259,9 @@ export default function AdminPage() {
             message?: string;
           };
           if (!response.ok) {
+            if (handleAuthFailure(response.status, data.message)) {
+              return;
+            }
             throw new Error(data.message || "Failed to load orders.");
           }
           setOrders(data.orders || []);
@@ -255,6 +274,9 @@ export default function AdminPage() {
             message?: string;
           };
           if (!response.ok) {
+            if (handleAuthFailure(response.status, data.message)) {
+              return;
+            }
             throw new Error(data.message || "Failed to load products.");
           }
           setProducts(data.products || []);
@@ -267,6 +289,9 @@ export default function AdminPage() {
             message?: string;
           };
           if (!response.ok) {
+            if (handleAuthFailure(response.status, data.message)) {
+              return;
+            }
             throw new Error(data.message || "Failed to load clients.");
           }
           setClients(data.clients || []);
@@ -284,6 +309,9 @@ export default function AdminPage() {
           };
 
           if (!adminsResponse.ok) {
+            if (handleAuthFailure(adminsResponse.status, adminsData.message)) {
+              return;
+            }
             throw new Error(adminsData.message || "Failed to load admin users.");
           }
 
@@ -296,6 +324,9 @@ export default function AdminPage() {
           };
 
           if (!settingsResponse.ok) {
+            if (handleAuthFailure(settingsResponse.status, settingsData.message)) {
+              return;
+            }
             throw new Error(settingsData.message || "Failed to load site settings.");
           }
 
@@ -447,6 +478,9 @@ export default function AdminPage() {
       };
 
       if (!response.ok) {
+        if (handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to save admin user.");
       }
 
@@ -456,6 +490,9 @@ export default function AdminPage() {
         message?: string;
       };
       if (!refreshed.ok) {
+        if (handleAuthFailure(refreshed.status, refreshedData.message)) {
+          return;
+        }
         throw new Error(refreshedData.message || "Failed to refresh admin users.");
       }
 
@@ -481,6 +518,9 @@ export default function AdminPage() {
       });
       const data = (await parseJsonSafely<{ message?: string }>(response)) as { message?: string };
       if (!response.ok) {
+        if (handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to remove admin user.");
       }
 
@@ -524,6 +564,9 @@ export default function AdminPage() {
 
       const data = (await parseJsonSafely<{ message?: string }>(response)) as { message?: string };
       if (!response.ok) {
+        if (handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to save product.");
       }
 
@@ -533,6 +576,9 @@ export default function AdminPage() {
         message?: string;
       };
       if (!refreshed.ok) {
+        if (handleAuthFailure(refreshed.status, refreshedData.message)) {
+          return;
+        }
         throw new Error(refreshedData.message || "Failed to refresh products.");
       }
 
@@ -558,6 +604,9 @@ export default function AdminPage() {
       });
       const data = (await parseJsonSafely<{ message?: string }>(response)) as { message?: string };
       if (!response.ok) {
+        if (handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to remove product.");
       }
 
@@ -591,6 +640,9 @@ export default function AdminPage() {
       };
 
       if (!response.ok || !data.order) {
+        if (!response.ok && handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to update order status.");
       }
 
@@ -629,6 +681,9 @@ export default function AdminPage() {
       };
 
       if (!response.ok || !data.videoUrl) {
+        if (!response.ok && handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to upload landing video.");
       }
 
@@ -698,6 +753,9 @@ export default function AdminPage() {
       };
 
       if (!response.ok || !data.settings) {
+        if (!response.ok && handleAuthFailure(response.status, data.message)) {
+          return;
+        }
         throw new Error(data.message || "Failed to save site settings.");
       }
 

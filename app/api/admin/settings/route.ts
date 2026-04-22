@@ -52,11 +52,11 @@ export async function PATCH(request: NextRequest) {
     const landingVideoUrl =
       typeof body.landingVideoUrl === "string" ? body.landingVideoUrl.trim() : undefined;
 
-    if (landingVideoUrl !== undefined && landingVideoUrl.length > 2000) {
-      return NextResponse.json({ message: "Video URL is too long." }, { status: 400 });
+    if (landingVideoUrl !== undefined && landingVideoUrl.length > 12_000_000) {
+      return NextResponse.json({ message: "Video is too large." }, { status: 400 });
     }
 
-    if (body.logoUrl !== undefined && (typeof body.logoUrl !== "string" || body.logoUrl.trim().length > 2_000_000)) {
+    if (body.logoUrl !== undefined && (typeof body.logoUrl !== "string" || body.logoUrl.trim().length > 3_000_000)) {
       return NextResponse.json({ message: "Logo URL is invalid or too large." }, { status: 400 });
     }
 

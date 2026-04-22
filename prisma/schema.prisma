@@ -84,3 +84,16 @@ model OrderItem {
   quantity  Int
   createdAt DateTime @default(now())
 }
+
+model SiteSettings {
+  id                  Int      @id @default(1)
+  landingVideoUrl     String   @default("")
+  logoUrl             String   @default("")
+  siteBackgroundColor String   @default("#eefaf2")
+  discountCodes       String[] @default([])
+  discountPercent     Int      @default(10)
+  menuBackgroundColor String   @default("#ffffff")
+  headerRowColor      String   @default("#ffffff")
+  currencyCode        String   @default("USD")
+  updatedAt           DateTime @updatedAt
+}

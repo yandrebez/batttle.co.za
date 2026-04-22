@@ -1,5 +1,4 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
+import { prisma } from "@/lib/prisma";
 import { VALID_CURRENCY_CODES } from "@/lib/currency";
 
 export type SiteSettings = {
@@ -24,7 +23,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   currencyCode: "USD",
 };
 
-const SETTINGS_PATH = path.join(process.cwd(), "data", "site-settings.json");
+const SETTINGS_ROW_ID = 1;
 
 function normalizeColor(value: unknown): string {
   const color = typeof value === "string" ? value.trim() : "";
@@ -35,40 +34,77 @@ function normalizeColor(value: unknown): string {
   return DEFAULT_SITE_SETTINGS.siteBackgroundColor;
 }
 
+async function ensureSiteSettingsTable() {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "SiteSettings" (
+      "id" INTEGER PRIMARY KEY,
+      "landingVideoUrl" TEXT NOT NULL DEFAULT '',
+      "logoUrl" TEXT NOT NULL DEFAULT '',
+      "siteBackgroundColor" TEXT NOT NULL DEFAULT '#eefaf2',
+      "discountCodes" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+      "discountPercent" INTEGER NOT NULL DEFAULT 10,
+      "menuBackgroundColor" TEXT NOT NULL DEFAULT '#ffffff',
+      "headerRowColor" TEXT NOT NULL DEFAULT '#ffffff',
+      "currencyCode" TEXT NOT NULL DEFAULT 'USD',
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+function normalizeSettings(parsed: Partial<SiteSettings>): SiteSettings {
+  return {
+    landingVideoUrl:
+      typeof parsed.landingVideoUrl === "string"
+        ? parsed.landingVideoUrl.trim()
+        : DEFAULT_SITE_SETTINGS.landingVideoUrl,
+    logoUrl:
+      typeof parsed.logoUrl === "string"
+        ? parsed.logoUrl.trim()
+        : DEFAULT_SITE_SETTINGS.logoUrl,
+    siteBackgroundColor: normalizeColor(parsed.siteBackgroundColor),
+    discountCodes: Array.isArray(parsed.discountCodes)
+      ? parsed.discountCodes
+          .map((entry) => (typeof entry === "string" ? entry.trim().toUpperCase() : ""))
+          .filter((entry) => entry.length > 0)
+      : DEFAULT_SITE_SETTINGS.discountCodes,
+    discountPercent:
+      typeof parsed.discountPercent === "number" &&
+      parsed.discountPercent >= 0 &&
+      parsed.discountPercent <= 100
+        ? Math.round(parsed.discountPercent)
+        : DEFAULT_SITE_SETTINGS.discountPercent,
+    menuBackgroundColor: normalizeColor(parsed.menuBackgroundColor),
+    headerRowColor: normalizeColor(parsed.headerRowColor),
+    currencyCode:
+      typeof parsed.currencyCode === "string" && VALID_CURRENCY_CODES.has(parsed.currencyCode)
+        ? parsed.currencyCode
+        : DEFAULT_SITE_SETTINGS.currencyCode,
+  };
+}
+
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
-    const raw = await readFile(SETTINGS_PATH, "utf8");
-    const parsed = JSON.parse(raw) as Partial<SiteSettings>;
+    const row = await prisma.siteSettings.findUnique({ where: { id: SETTINGS_ROW_ID } });
+    if (!row) {
+      const created = await prisma.siteSettings.create({
+        data: { id: SETTINGS_ROW_ID, ...DEFAULT_SITE_SETTINGS },
+      });
+      return normalizeSettings(created);
+    }
 
-    return {
-      landingVideoUrl:
-        typeof parsed.landingVideoUrl === "string"
-          ? parsed.landingVideoUrl.trim()
-          : DEFAULT_SITE_SETTINGS.landingVideoUrl,
-      logoUrl:
-        typeof parsed.logoUrl === "string"
-          ? parsed.logoUrl.trim()
-          : DEFAULT_SITE_SETTINGS.logoUrl,
-      siteBackgroundColor: normalizeColor(parsed.siteBackgroundColor),
-      discountCodes: Array.isArray(parsed.discountCodes)
-        ? parsed.discountCodes
-            .map((entry) => (typeof entry === "string" ? entry.trim().toUpperCase() : ""))
-            .filter((entry) => entry.length > 0)
-        : DEFAULT_SITE_SETTINGS.discountCodes,
-      discountPercent:
-        typeof parsed.discountPercent === "number" &&
-        parsed.discountPercent >= 0 &&
-        parsed.discountPercent <= 100
-          ? Math.round(parsed.discountPercent)
-          : DEFAULT_SITE_SETTINGS.discountPercent,
-      menuBackgroundColor: normalizeColor(parsed.menuBackgroundColor),
-      headerRowColor: normalizeColor(parsed.headerRowColor),
-      currencyCode:
-        typeof parsed.currencyCode === "string" && VALID_CURRENCY_CODES.has(parsed.currencyCode)
-          ? parsed.currencyCode
-          : DEFAULT_SITE_SETTINGS.currencyCode,
-    };
-  } catch {
+    return normalizeSettings(row);
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? (error as { code?: string }).code : "";
+    if (code === "P2021") {
+      await ensureSiteSettingsTable();
+      const row = await prisma.siteSettings.upsert({
+        where: { id: SETTINGS_ROW_ID },
+        update: {},
+        create: { id: SETTINGS_ROW_ID, ...DEFAULT_SITE_SETTINGS },
+      });
+      return normalizeSettings(row);
+    }
+
     return { ...DEFAULT_SITE_SETTINGS };
   }
 }
@@ -117,8 +153,25 @@ export async function updateSiteSettings(partial: Partial<SiteSettings>): Promis
         : current.currencyCode,
   };
 
-  await mkdir(path.dirname(SETTINGS_PATH), { recursive: true });
-  await writeFile(SETTINGS_PATH, JSON.stringify(next, null, 2), "utf8");
+  try {
+    const row = await prisma.siteSettings.upsert({
+      where: { id: SETTINGS_ROW_ID },
+      update: next,
+      create: { id: SETTINGS_ROW_ID, ...next },
+    });
+    return normalizeSettings(row);
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? (error as { code?: string }).code : "";
+    if (code === "P2021") {
+      await ensureSiteSettingsTable();
+      const row = await prisma.siteSettings.upsert({
+        where: { id: SETTINGS_ROW_ID },
+        update: next,
+        create: { id: SETTINGS_ROW_ID, ...next },
+      });
+      return normalizeSettings(row);
+    }
 
-  return next;
+    return next;
+  }
 }

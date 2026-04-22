@@ -1,9 +1,7 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { getTokenFromRequest, requireRole, verifyAccessToken } from "@/lib/auth";
 
-const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_SIZE_BYTES = 8 * 1024 * 1024;
 
 function ensureAdmin(request: NextRequest): NextResponse | null {
   const token = getTokenFromRequest(request);
@@ -60,16 +58,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Use MP4, WebM, or OGG video." }, { status: 400 });
     }
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadsDir, { recursive: true });
-
-    const filename = `landing-video.${extension}`;
-    const outputPath = path.join(uploadsDir, filename);
-
     const bytes = await entry.arrayBuffer();
-    await writeFile(outputPath, Buffer.from(bytes));
-
-    const videoUrl = `/uploads/${filename}?v=${Date.now()}`;
+    const base64 = Buffer.from(bytes).toString("base64");
+    const videoUrl = `data:${entry.type};base64,${base64}`;
     return NextResponse.json({ videoUrl }, { status: 200 });
   } catch {
     return NextResponse.json({ message: "Failed to upload video." }, { status: 500 });

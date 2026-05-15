@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 type CreateOrderRequest = {
   userId?: string;
   guestEmail?: string;
+  deliveryMethod?: "HOME_DELIVERY" | "PUDO_PICKUP";
+  pudoLocation?: string;
   fullName: string;
   addressLine: string;
   city: string;
@@ -22,13 +24,29 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CreateOrderRequest;
 
     const { userId, guestEmail, fullName, addressLine, city, postalCode, items } = body;
+    const deliveryMethod = body.deliveryMethod === "PUDO_PICKUP" ? "PUDO_PICKUP" : "HOME_DELIVERY";
+    const pudoLocation = typeof body.pudoLocation === "string" ? body.pudoLocation.trim() : "";
     let resolvedUserId: string | null = null;
     let resolvedUserEmail: string | null = null;
     let resolvedUserName: string | null = null;
 
-    if (!fullName || !addressLine || !city || !postalCode || !items || items.length === 0) {
+    if (!fullName || !city || !postalCode || !items || items.length === 0) {
       return NextResponse.json(
         { message: "Missing required order fields" },
+        { status: 400 },
+      );
+    }
+
+    if (deliveryMethod === "HOME_DELIVERY" && !addressLine) {
+      return NextResponse.json(
+        { message: "Address is required for home delivery" },
+        { status: 400 },
+      );
+    }
+
+    if (deliveryMethod === "PUDO_PICKUP" && !pudoLocation) {
+      return NextResponse.json(
+        { message: "PUDO pickup point is required" },
         { status: 400 },
       );
     }
@@ -59,6 +77,12 @@ export async function POST(request: NextRequest) {
     }
 
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const resolvedAddressLine =
+      deliveryMethod === "PUDO_PICKUP" ? `PUDO Pickup Point: ${pudoLocation}` : addressLine;
+    const deliveryNotes =
+      deliveryMethod === "PUDO_PICKUP"
+        ? `Delivery method: PUDO pickup. Pickup point: ${pudoLocation}`
+        : "Delivery method: Home delivery.";
 
     // Create order with items
     const order = await prisma.order.create({
@@ -66,10 +90,12 @@ export async function POST(request: NextRequest) {
         userId: resolvedUserId,
         guestEmail: guestEmail || null,
         fullName,
-        addressLine,
+        addressLine: resolvedAddressLine,
         city,
         postalCode,
         totalAmount,
+        courierCompany: deliveryMethod === "PUDO_PICKUP" ? "PUDO" : null,
+        deliveryNotes,
         items: {
           create: items.map((item) => ({
             productId: item.id,

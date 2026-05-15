@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 
 const primaryItems = [
+  { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
   { href: "/orders", label: "Orders" },
 ];

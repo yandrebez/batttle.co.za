@@ -14,6 +14,8 @@ type CartItemPayload = {
 type InitiateRequest = {
   userId?: string;
   guestEmail?: string;
+  deliveryMethod?: "HOME_DELIVERY" | "PUDO_PICKUP";
+  pudoLocation?: string;
   fullName: string;
   addressLine: string;
   city: string;
@@ -26,9 +28,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as InitiateRequest;
     const { userId, guestEmail, fullName, addressLine, city, postalCode, items, discountCode } = body;
+    const deliveryMethod = body.deliveryMethod === "PUDO_PICKUP" ? "PUDO_PICKUP" : "HOME_DELIVERY";
+    const pudoLocation = typeof body.pudoLocation === "string" ? body.pudoLocation.trim() : "";
 
-    if (!fullName || !addressLine || !city || !postalCode || !items || items.length === 0) {
+    if (!fullName || !city || !postalCode || !items || items.length === 0) {
       return NextResponse.json({ message: "Missing required order fields." }, { status: 400 });
+    }
+
+    if (deliveryMethod === "HOME_DELIVERY" && !addressLine) {
+      return NextResponse.json({ message: "Address is required for home delivery." }, { status: 400 });
+    }
+
+    if (deliveryMethod === "PUDO_PICKUP" && !pudoLocation) {
+      return NextResponse.json({ message: "PUDO pickup point is required." }, { status: 400 });
     }
 
     if (!userId && !guestEmail) {
@@ -79,16 +91,25 @@ export async function POST(request: NextRequest) {
     const discountMultiplier = Math.max(0, Math.min(100, discountPercent)) / 100;
     const totalAmount = parseFloat((rawTotal * (1 - discountMultiplier)).toFixed(2));
 
+    const resolvedAddressLine =
+      deliveryMethod === "PUDO_PICKUP" ? `PUDO Pickup Point: ${pudoLocation}` : addressLine;
+    const deliveryNotes =
+      deliveryMethod === "PUDO_PICKUP"
+        ? `Delivery method: PUDO pickup. Pickup point: ${pudoLocation}`
+        : "Delivery method: Home delivery.";
+
     // Create the order in PENDING state
     const order = await prisma.order.create({
       data: {
         userId: resolvedUserId,
         guestEmail: guestEmail ?? null,
         fullName,
-        addressLine,
+        addressLine: resolvedAddressLine,
         city,
         postalCode,
         totalAmount,
+        courierCompany: deliveryMethod === "PUDO_PICKUP" ? "PUDO" : null,
+        deliveryNotes,
         items: {
           create: items.map((item) => ({
             productId: item.id,
@@ -111,7 +132,7 @@ export async function POST(request: NextRequest) {
         order: {
           id: order.id,
           fullName,
-          addressLine,
+          addressLine: resolvedAddressLine,
           city,
           postalCode,
           totalAmount,

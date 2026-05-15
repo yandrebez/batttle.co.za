@@ -11,18 +11,22 @@ import { useCurrencySymbol } from "@/components/CurrencyProvider";
 import styles from "./page.module.css";
 
 type ShippingForm = {
+  deliveryMethod: "HOME_DELIVERY" | "PUDO_PICKUP";
   fullName: string;
   addressLine: string;
   city: string;
   postalCode: string;
+  pudoLocation: string;
   guestEmail?: string;
 };
 
 const initialShippingForm: ShippingForm = {
+  deliveryMethod: "HOME_DELIVERY",
   fullName: "",
   addressLine: "",
   city: "",
   postalCode: "",
+  pudoLocation: "",
 };
 
 export default function CartPage() {
@@ -121,6 +125,8 @@ export default function CartPage() {
         body: JSON.stringify({
           userId: user?.id,
           guestEmail: user?.email || shipping.guestEmail,
+          deliveryMethod: shipping.deliveryMethod,
+          pudoLocation: shipping.deliveryMethod === "PUDO_PICKUP" ? shipping.pudoLocation : undefined,
           fullName: shipping.fullName,
           addressLine: shipping.addressLine,
           city: shipping.city,
@@ -326,6 +332,22 @@ export default function CartPage() {
             ) : null}
 
             <form className={styles.form} onSubmit={handleShippingSubmit}>
+              <label htmlFor="deliveryMethod">Delivery Method</label>
+              <select
+                id="deliveryMethod"
+                className={styles.select}
+                value={shipping.deliveryMethod}
+                onChange={(event) =>
+                  setShipping((prev) => ({
+                    ...prev,
+                    deliveryMethod: event.target.value as "HOME_DELIVERY" | "PUDO_PICKUP",
+                  }))
+                }
+              >
+                <option value="HOME_DELIVERY">Home Delivery</option>
+                <option value="PUDO_PICKUP">PUDO Pickup Point</option>
+              </select>
+
               <label htmlFor="fullName">Full Name</label>
               <input
                 id="fullName"
@@ -351,15 +373,32 @@ export default function CartPage() {
                 </>
               ) : null}
 
-              <label htmlFor="addressLine">Address Line</label>
-              <input
-                id="addressLine"
-                value={shipping.addressLine}
-                onChange={(event) =>
-                  setShipping((prev) => ({ ...prev, addressLine: event.target.value }))
-                }
-                required
-              />
+              {shipping.deliveryMethod === "HOME_DELIVERY" ? (
+                <>
+                  <label htmlFor="addressLine">Address Line</label>
+                  <input
+                    id="addressLine"
+                    value={shipping.addressLine}
+                    onChange={(event) =>
+                      setShipping((prev) => ({ ...prev, addressLine: event.target.value }))
+                    }
+                    required
+                  />
+                </>
+              ) : (
+                <>
+                  <label htmlFor="pudoLocation">PUDO Pickup Point / Locker Code</label>
+                  <input
+                    id="pudoLocation"
+                    value={shipping.pudoLocation}
+                    onChange={(event) =>
+                      setShipping((prev) => ({ ...prev, pudoLocation: event.target.value }))
+                    }
+                    placeholder="Enter pickup point name or locker code"
+                    required
+                  />
+                </>
+              )}
 
               <label htmlFor="city">City</label>
               <input

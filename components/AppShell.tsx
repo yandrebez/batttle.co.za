@@ -138,9 +138,14 @@ export function AppShell({ children }: AppShellProps) {
             <h1 className="appTopTitle">BATTTLE <span className="appVersionTag">{APP_VERSION_LABEL}</span></h1>
           </div>
 
-          <Link href="/cart" className="topCartButton" aria-label="Cart">
-            <span aria-hidden="true">🛒</span>
-          </Link>
+          <div className="appTopActions">
+            <Link href="/" className="topHomeButton" aria-label="Home">
+              Home
+            </Link>
+            <Link href="/cart" className="topCartButton" aria-label="Cart">
+              <span aria-hidden="true">🛒</span>
+            </Link>
+          </div>
         </header>
 
         <main className="workspace">

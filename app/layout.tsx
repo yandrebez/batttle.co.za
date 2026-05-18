@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
 import { CurrencyProvider } from "@/components/CurrencyProvider";
+import { MaintenanceGuard } from "@/components/MaintenanceGuard";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body><CurrencyProvider><AppShell>{children}</AppShell></CurrencyProvider></body>
+      <body><CurrencyProvider><MaintenanceGuard><AppShell>{children}</AppShell></MaintenanceGuard></CurrencyProvider></body>
     </html>
   );
 }

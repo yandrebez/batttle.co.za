@@ -16,6 +16,7 @@ type InitiateRequest = {
   guestEmail?: string;
   deliveryMethod?: "HOME_DELIVERY" | "PUDO_PICKUP";
   pudoLocation?: string;
+  pudoPointId?: string;
   fullName: string;
   addressLine: string;
   city: string;
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
     const { userId, guestEmail, fullName, addressLine, city, postalCode, items, discountCode } = body;
     const deliveryMethod = body.deliveryMethod === "PUDO_PICKUP" ? "PUDO_PICKUP" : "HOME_DELIVERY";
     const pudoLocation = typeof body.pudoLocation === "string" ? body.pudoLocation.trim() : "";
+    const pudoPointId = typeof body.pudoPointId === "string" ? body.pudoPointId.trim() : "";
 
     if (!fullName || !city || !postalCode || !items || items.length === 0) {
       return NextResponse.json({ message: "Missing required order fields." }, { status: 400 });
@@ -109,6 +111,7 @@ export async function POST(request: NextRequest) {
         postalCode,
         totalAmount,
         courierCompany: deliveryMethod === "PUDO_PICKUP" ? "PUDO" : null,
+        trackingCode: deliveryMethod === "PUDO_PICKUP" && pudoPointId ? pudoPointId : null,
         deliveryNotes,
         items: {
           create: items.map((item) => ({

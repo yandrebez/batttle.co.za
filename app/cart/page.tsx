@@ -16,8 +16,19 @@ type ShippingForm = {
   addressLine: string;
   city: string;
   postalCode: string;
+  pudoSearch: string;
+  pudoPointId: string;
   pudoLocation: string;
   guestEmail?: string;
+};
+
+type PudoLocation = {
+  id: string;
+  name: string;
+  addressLine: string;
+  suburb: string;
+  city: string;
+  postalCode: string;
 };
 
 const initialShippingForm: ShippingForm = {
@@ -26,6 +37,8 @@ const initialShippingForm: ShippingForm = {
   addressLine: "",
   city: "",
   postalCode: "",
+  pudoSearch: "",
+  pudoPointId: "",
   pudoLocation: "",
 };
 
@@ -38,6 +51,9 @@ export default function CartPage() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [orderError, setOrderError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pudoLocations, setPudoLocations] = useState<PudoLocation[]>([]);
+  const [isLoadingPudoLocations, setIsLoadingPudoLocations] = useState(false);
+  const [pudoError, setPudoError] = useState("");
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -113,10 +129,56 @@ export default function CartPage() {
     setIsPayModalOpen(false);
   };
 
+  const handleSearchPudoLocations = async () => {
+    const searchText = shipping.pudoSearch.trim() || shipping.postalCode.trim();
+    if (!searchText) {
+      setPudoError("Enter an area or postal code to search for PUDO points.");
+      return;
+    }
+
+    setPudoError("");
+    setIsLoadingPudoLocations(true);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("q", searchText);
+      if (shipping.postalCode.trim()) {
+        params.set("postalCode", shipping.postalCode.trim());
+      }
+
+      const response = await fetch(`/api/courier/pudo/locations?${params.toString()}`);
+      const data = (await response.json()) as { locations?: PudoLocation[]; message?: string };
+
+      if (!response.ok) {
+        setPudoError(data.message || "Could not load PUDO points right now.");
+        setPudoLocations([]);
+        return;
+      }
+
+      const locations = Array.isArray(data.locations) ? data.locations : [];
+      setPudoLocations(locations);
+
+      if (!locations.length) {
+        setPudoError("No PUDO points found for this search.");
+      }
+    } catch {
+      setPudoError("Could not load PUDO points right now.");
+      setPudoLocations([]);
+    } finally {
+      setIsLoadingPudoLocations(false);
+    }
+  };
+
   const handleShippingSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setOrderError("");
     setIsSubmitting(true);
+
+    if (shipping.deliveryMethod === "PUDO_PICKUP" && !shipping.pudoLocation.trim()) {
+      setOrderError("Please select a PUDO pickup point.");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/payfast/initiate", {
@@ -127,6 +189,7 @@ export default function CartPage() {
           guestEmail: user?.email || shipping.guestEmail,
           deliveryMethod: shipping.deliveryMethod,
           pudoLocation: shipping.deliveryMethod === "PUDO_PICKUP" ? shipping.pudoLocation : undefined,
+          pudoPointId: shipping.deliveryMethod === "PUDO_PICKUP" ? shipping.pudoPointId : undefined,
           fullName: shipping.fullName,
           addressLine: shipping.addressLine,
           city: shipping.city,
@@ -387,7 +450,59 @@ export default function CartPage() {
                 </>
               ) : (
                 <>
-                  <label htmlFor="pudoLocation">PUDO Pickup Point / Locker Code</label>
+                  <label htmlFor="pudoSearch">Search PUDO pickup points</label>
+                  <div className={styles.pudoSearchRow}>
+                    <input
+                      id="pudoSearch"
+                      value={shipping.pudoSearch}
+                      onChange={(event) =>
+                        setShipping((prev) => ({ ...prev, pudoSearch: event.target.value }))
+                      }
+                      placeholder="Suburb, city or postal code"
+                    />
+                    <button
+                      type="button"
+                      className={styles.pudoSearchBtn}
+                      onClick={() => void handleSearchPudoLocations()}
+                      disabled={isLoadingPudoLocations}
+                    >
+                      {isLoadingPudoLocations ? "Searching..." : "Search"}
+                    </button>
+                  </div>
+
+                  {pudoError ? <p className={styles.pudoError}>{pudoError}</p> : null}
+
+                  {pudoLocations.length ? (
+                    <div className={styles.pudoList}>
+                      {pudoLocations.map((location) => {
+                        const displayLine = [location.addressLine, location.suburb, location.city, location.postalCode]
+                          .filter(Boolean)
+                          .join(", ");
+                        const selected = shipping.pudoPointId === location.id;
+
+                        return (
+                          <button
+                            key={location.id}
+                            type="button"
+                            className={`${styles.pudoItem} ${selected ? styles.pudoItemActive : ""}`}
+                            onClick={() =>
+                              setShipping((prev) => ({
+                                ...prev,
+                                pudoPointId: location.id,
+                                pudoLocation: `${location.name} (${location.id})${displayLine ? ` - ${displayLine}` : ""}`,
+                              }))
+                            }
+                          >
+                            <strong>{location.name}</strong>
+                            <span>{location.id}</span>
+                            {displayLine ? <small>{displayLine}</small> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  <label htmlFor="pudoLocation">Selected PUDO Pickup Point</label>
                   <input
                     id="pudoLocation"
                     value={shipping.pudoLocation}

@@ -34,3 +34,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Courier Guy / PUDO Setup
+
+To enable live PUDO point lookup, configure these environment variables in local `.env` and in Vercel Project Settings:
+
+```bash
+COURIER_GUY_API_KEY=""
+# Optional alternative to API key auth:
+COURIER_GUY_USERNAME=""
+COURIER_GUY_PASSWORD=""
+
+# Optional overrides (defaults shown):
+COURIER_GUY_BASE_URL="https://api.thecourierguy.co.za"
+COURIER_GUY_PUDO_LOCATIONS_PATH="/v1/pudo/locations"
+```
+
+Checkout now calls `GET /api/courier/pudo/locations` to search PUDO points and stores the selected point on the order metadata.

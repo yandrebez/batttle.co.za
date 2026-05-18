@@ -7,6 +7,7 @@ type CreateOrderRequest = {
   guestEmail?: string;
   deliveryMethod?: "HOME_DELIVERY" | "PUDO_PICKUP";
   pudoLocation?: string;
+  pudoPointId?: string;
   fullName: string;
   addressLine: string;
   city: string;
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     const { userId, guestEmail, fullName, addressLine, city, postalCode, items } = body;
     const deliveryMethod = body.deliveryMethod === "PUDO_PICKUP" ? "PUDO_PICKUP" : "HOME_DELIVERY";
     const pudoLocation = typeof body.pudoLocation === "string" ? body.pudoLocation.trim() : "";
+    const pudoPointId = typeof body.pudoPointId === "string" ? body.pudoPointId.trim() : "";
     let resolvedUserId: string | null = null;
     let resolvedUserEmail: string | null = null;
     let resolvedUserName: string | null = null;
@@ -95,6 +97,7 @@ export async function POST(request: NextRequest) {
         postalCode,
         totalAmount,
         courierCompany: deliveryMethod === "PUDO_PICKUP" ? "PUDO" : null,
+        trackingCode: deliveryMethod === "PUDO_PICKUP" && pudoPointId ? pudoPointId : null,
         deliveryNotes,
         items: {
           create: items.map((item) => ({

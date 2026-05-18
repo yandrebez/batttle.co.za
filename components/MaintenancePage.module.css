@@ -1,53 +1,82 @@
 .maintenance {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  width: 100%;
-  background: #000;
-  color: #fff;
-  font-family: inherit;
-  padding: 2rem;
+  background: #0a0a0a;
+  color: #666666;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .content {
   text-align: center;
-  max-width: 90%;
+  max-width: 100%;
+  padding: 2rem;
+  pointer-events: auto;
 }
 
 .title {
-  font-size: 3rem;
-  font-weight: 400;
-  margin: 0 0 1rem 0;
-  letter-spacing: 0.05em;
-  text-transform: capitalize;
-  opacity: 0.6;
+  font-size: 4.5rem;
+  font-weight: 300;
+  margin: 0 0 2rem 0;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: #555555;
+  line-height: 1.2;
+  user-select: none;
+}
+
+.title::first-letter {
+  text-transform: uppercase;
 }
 
 .more {
-  font-size: 5rem;
-  font-weight: 300;
+  font-size: 8rem;
+  font-weight: 200;
   margin: 0;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: #555555;
+  line-height: 1;
+  user-select: none;
+}
+
+@media (max-width: 1024px) {
+  .title {
+    font-size: 3.5rem;
+  }
+
+  .more {
+    font-size: 6rem;
+  }
 }
 
 @media (max-width: 768px) {
   .title {
-    font-size: 1.5rem;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .more {
-    font-size: 2.5rem;
+    font-size: 4rem;
   }
 }
 
 @media (max-width: 480px) {
   .title {
-    font-size: 1.25rem;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
   }
 
   .more {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 }

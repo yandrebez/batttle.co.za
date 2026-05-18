@@ -51,3 +51,12 @@ COURIER_GUY_PUDO_LOCATIONS_PATH="/v1/pudo/locations"
 ```
 
 Checkout now calls `GET /api/courier/pudo/locations` to search PUDO points and stores the selected point on the order metadata.
+
+## Shipping Prices
+
+Default shipping prices are configured in `lib/shipping.ts`:
+
+- Home Delivery: `99`
+- PUDO Pickup: `60`
+
+These are applied in checkout UI and enforced again server-side before payment.

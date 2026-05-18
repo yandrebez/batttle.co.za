@@ -106,6 +106,7 @@ type SiteSettingsFormState = {
   menuBackgroundColor: string;
   headerRowColor: string;
   currencyCode: string;
+  maintenanceMode: boolean;
 };
 
 type StoredSiteSettings = {
@@ -115,9 +116,10 @@ type StoredSiteSettings = {
   menuBackgroundColor: string;
   headerRowColor: string;
   currencyCode: string;
+  maintenanceMode: boolean;
 };
 
-type SettingsSection = "landing" | "discounts" | "appearance" | "admins";
+type SettingsSection = "landing" | "discounts" | "appearance" | "admins" | "maintenance";
 
 const orderStatuses = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 const deliveryStatuses = ["UNASSIGNED", "ASSIGNED", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
@@ -179,6 +181,7 @@ const initialSiteSettingsForm: SiteSettingsFormState = {
   menuBackgroundColor: "#ffffff",
   headerRowColor: "#ffffff",
   currencyCode: "USD",
+  maintenanceMode: false,
 };
 
 function buildOrderDrafts(rows: AdminOrder[]): Record<string, OrderDraft> {
@@ -390,6 +393,7 @@ export default function AdminPage() {
             menuBackgroundColor: settingsData.settings?.menuBackgroundColor || "#ffffff",
             headerRowColor: settingsData.settings?.headerRowColor || "#ffffff",
             currencyCode: settingsData.settings?.currencyCode || "USD",
+            maintenanceMode: settingsData.settings?.maintenanceMode || false,
           });
         }
       } catch (loadError) {
@@ -919,6 +923,7 @@ export default function AdminPage() {
           menuBackgroundColor: siteSettingsForm.menuBackgroundColor,
           headerRowColor: siteSettingsForm.headerRowColor,
           currencyCode: siteSettingsForm.currencyCode,
+          maintenanceMode: siteSettingsForm.maintenanceMode,
         }),
       });
 
@@ -944,6 +949,7 @@ export default function AdminPage() {
         menuBackgroundColor: data.settings.menuBackgroundColor || "#ffffff",
         headerRowColor: data.settings.headerRowColor || "#ffffff",
         currencyCode: data.settings.currencyCode || "USD",
+        maintenanceMode: data.settings.maintenanceMode || false,
       });
       setNotice("Site settings updated.");
     } catch (settingsError) {
@@ -1836,6 +1842,44 @@ export default function AdminPage() {
                         ))}
                         {!admins.length && !isBusy ? <div className={styles.row}>No admin users found.</div> : null}
                       </div>
+                    </div>
+                  ) : null}
+                </section>
+
+                <section className={styles.settingsSection}>
+                  <button
+                    type="button"
+                    className={`${styles.settingsSectionButton} ${openSettingsSection === "maintenance" ? styles.settingsSectionButtonOpen : ""}`}
+                    onClick={() => setOpenSettingsSection((prev) => (prev === "maintenance" ? "landing" : "maintenance"))}
+                  >
+                    Maintenance Mode
+                  </button>
+                  {openSettingsSection === "maintenance" ? (
+                    <div className={styles.settingsSectionBody}>
+                      <form className={styles.form} onSubmit={submitSiteSettingsForm}>
+                        <p className={styles.muted}>Enable maintenance mode to display a maintenance page instead of the store.</p>
+                        <div className={styles.formRow}>
+                          <label htmlFor="maintenanceMode">
+                            <input
+                              id="maintenanceMode"
+                              type="checkbox"
+                              checked={siteSettingsForm.maintenanceMode}
+                              onChange={(event) =>
+                                setSiteSettingsForm((prev) => ({ ...prev, maintenanceMode: event.target.checked }))
+                              }
+                            />
+                            {" "}Enable Maintenance Mode
+                          </label>
+                          <p className={styles.muted}>
+                            When enabled, visitors will see a maintenance page instead of the store. Admin pages remain accessible.
+                          </p>
+                        </div>
+                        <div className={styles.formActions}>
+                          <button type="submit" className={styles.submit} disabled={isBusy}>
+                            Save Maintenance Settings
+                          </button>
+                        </div>
+                      </form>
                     </div>
                   ) : null}
                 </section>

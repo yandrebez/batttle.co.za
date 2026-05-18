@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/useAuth";
 import { CartItem } from "@/types/cart";
 import { AuthModal } from "@/components/AuthModal";
 import { useCurrencySymbol } from "@/components/CurrencyProvider";
+import { getShippingPrice } from "@/lib/shipping";
 import styles from "./page.module.css";
 
 type ShippingForm = {
@@ -75,9 +76,14 @@ export default function CartPage() {
     [totalAmount, discountPercent],
   );
 
+  const shippingAmount = useMemo(
+    () => getShippingPrice(shipping.deliveryMethod),
+    [shipping.deliveryMethod],
+  );
+
   const finalAmount = useMemo(
-    () => parseFloat((totalAmount - discountAmount).toFixed(2)),
-    [totalAmount, discountAmount],
+    () => parseFloat((totalAmount - discountAmount + shippingAmount).toFixed(2)),
+    [totalAmount, discountAmount, shippingAmount],
   );
 
   const handleApplyDiscount = async () => {
@@ -343,6 +349,11 @@ export default function CartPage() {
             <span>−{currencySymbol}{discountAmount.toFixed(2)}</span>
           </div>
         ) : null}
+
+        <div className={styles.summaryRow}>
+          <span>Shipping ({shipping.deliveryMethod === "PUDO_PICKUP" ? "PUDO" : "Home Delivery"})</span>
+          <span>{currencySymbol}{shippingAmount.toFixed(2)}</span>
+        </div>
 
         <div className={styles.summaryRow}>
           <span>Total to pay</span>

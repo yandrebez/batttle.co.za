@@ -109,6 +109,7 @@ model SiteSettings {
   menuBackgroundColor String   @default("#ffffff")
   headerRowColor      String   @default("#ffffff")
   currencyCode        String   @default("USD")
+  maintenanceMode     Boolean  @default(false)
   updatedAt           DateTime @updatedAt
 }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { buildPayFastPayload } from "@/lib/payfast";
+import { getShippingPrice } from "@/lib/shipping";
 
 type CartItemPayload = {
   id: number;
@@ -91,14 +92,16 @@ export async function POST(request: NextRequest) {
       }
     }
     const discountMultiplier = Math.max(0, Math.min(100, discountPercent)) / 100;
-    const totalAmount = parseFloat((rawTotal * (1 - discountMultiplier)).toFixed(2));
+    const discountedSubtotal = rawTotal * (1 - discountMultiplier);
+    const shippingAmount = getShippingPrice(deliveryMethod);
+    const totalAmount = parseFloat((discountedSubtotal + shippingAmount).toFixed(2));
 
     const resolvedAddressLine =
       deliveryMethod === "PUDO_PICKUP" ? `PUDO Pickup Point: ${pudoLocation}` : addressLine;
     const deliveryNotes =
       deliveryMethod === "PUDO_PICKUP"
-        ? `Delivery method: PUDO pickup. Pickup point: ${pudoLocation}`
-        : "Delivery method: Home delivery.";
+        ? `Delivery method: PUDO pickup. Pickup point: ${pudoLocation}. Shipping: ${shippingAmount.toFixed(2)}.`
+        : `Delivery method: Home delivery. Shipping: ${shippingAmount.toFixed(2)}.`;
 
     // Create the order in PENDING state
     const order = await prisma.order.create({

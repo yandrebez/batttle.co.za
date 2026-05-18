@@ -45,6 +45,7 @@ export async function PATCH(request: NextRequest) {
       menuBackgroundColor?: string;
       headerRowColor?: string;
       currencyCode?: string;
+      maintenanceMode?: boolean;
     };
 
     const landingVideoUrl =
@@ -90,6 +91,7 @@ export async function PATCH(request: NextRequest) {
       menuBackgroundColor: body.menuBackgroundColor,
       headerRowColor: body.headerRowColor,
       currencyCode: body.currencyCode,
+      maintenanceMode: body.maintenanceMode,
     });
 
     return NextResponse.json({ settings }, { status: 200 });

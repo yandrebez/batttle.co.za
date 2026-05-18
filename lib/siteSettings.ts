@@ -10,6 +10,7 @@ export type SiteSettings = {
   menuBackgroundColor: string;
   headerRowColor: string;
   currencyCode: string;
+  maintenanceMode: boolean;
 };
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
@@ -21,6 +22,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   menuBackgroundColor: "#ffffff",
   headerRowColor: "#ffffff",
   currencyCode: "USD",
+  maintenanceMode: false,
 };
 
 const SETTINGS_ROW_ID = 1;
@@ -79,6 +81,7 @@ function normalizeSettings(parsed: Partial<SiteSettings>): SiteSettings {
       typeof parsed.currencyCode === "string" && VALID_CURRENCY_CODES.has(parsed.currencyCode)
         ? parsed.currencyCode
         : DEFAULT_SITE_SETTINGS.currencyCode,
+    maintenanceMode: typeof parsed.maintenanceMode === "boolean" ? parsed.maintenanceMode : DEFAULT_SITE_SETTINGS.maintenanceMode,
   };
 }
 
@@ -151,6 +154,7 @@ export async function updateSiteSettings(partial: Partial<SiteSettings>): Promis
       typeof partial.currencyCode === "string" && VALID_CURRENCY_CODES.has(partial.currencyCode)
         ? partial.currencyCode
         : current.currencyCode,
+    maintenanceMode: typeof partial.maintenanceMode === "boolean" ? partial.maintenanceMode : current.maintenanceMode,
   };
 
   try {

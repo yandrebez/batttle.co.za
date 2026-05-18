@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
+import { getShippingPrice } from "@/lib/shipping";
 
 type CreateOrderRequest = {
   userId?: string;
@@ -78,13 +79,15 @@ export async function POST(request: NextRequest) {
       resolvedUserName = existingUser.name;
     }
 
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shippingAmount = getShippingPrice(deliveryMethod);
+    const totalAmount = parseFloat((subtotal + shippingAmount).toFixed(2));
     const resolvedAddressLine =
       deliveryMethod === "PUDO_PICKUP" ? `PUDO Pickup Point: ${pudoLocation}` : addressLine;
     const deliveryNotes =
       deliveryMethod === "PUDO_PICKUP"
-        ? `Delivery method: PUDO pickup. Pickup point: ${pudoLocation}`
-        : "Delivery method: Home delivery.";
+        ? `Delivery method: PUDO pickup. Pickup point: ${pudoLocation}. Shipping: ${shippingAmount.toFixed(2)}.`
+        : `Delivery method: Home delivery. Shipping: ${shippingAmount.toFixed(2)}.`;
 
     // Create order with items
     const order = await prisma.order.create({

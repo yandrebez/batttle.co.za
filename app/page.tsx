@@ -2,12 +2,19 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { APP_VERSION_LABEL } from "@/lib/version";
+import { MaintenancePage } from "@/components/MaintenancePage";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const settings = await getSiteSettings();
+
+  // Show maintenance page if maintenance mode is enabled
+  if (settings.maintenanceMode) {
+    return <MaintenancePage />;
+  }
+
   const pageStyle = { "--landing-bg-base": settings.siteBackgroundColor } as CSSProperties;
 
   return (

@@ -40,11 +40,11 @@
 
 .more {
   font-size: 8rem;
-  font-weight: 200;
+  font-weight: 700;
   margin: 0;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #555555;
+  color: #3a3a3a;
   line-height: 1;
   user-select: none;
 }

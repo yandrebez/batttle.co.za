@@ -36,6 +36,9 @@
 .content {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   width: min(100%, 1100px);
   max-width: 100%;
@@ -52,9 +55,11 @@
   text-transform: none;
   color: #4d4e52;
   line-height: 1.2;
-  max-width: min(92vw, 980px);
-  white-space: normal;
-  overflow-wrap: break-word;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  white-space: nowrap;
+  overflow-wrap: normal;
   user-select: none;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 2px 4px rgba(0, 0, 0, 0.55);
 }
@@ -77,7 +82,7 @@
 
 @media (max-width: 1024px) {
   .title {
-    font-size: clamp(1.3rem, 5.8vw, 2.9rem);
+    font-size: clamp(1.1rem, 5.2vw, 2.7rem);
   }
 
   .more {
@@ -91,9 +96,8 @@
   }
 
   .title {
-    font-size: clamp(1.2rem, 7.8vw, 2.15rem);
+    font-size: clamp(0.95rem, 6.8vw, 1.95rem);
     margin-bottom: 0.6rem;
-    max-width: 90vw;
   }
 
   .more {
@@ -109,9 +113,8 @@
   }
 
   .title {
-    font-size: clamp(1.05rem, 7.2vw, 1.65rem);
+    font-size: clamp(0.82rem, 6.3vw, 1.45rem);
     margin-bottom: 0.55rem;
-    max-width: 88vw;
   }
 
   .more {

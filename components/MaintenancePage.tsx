@@ -1,10 +1,10 @@
-import { Cinzel } from "next/font/google";
+import { Cormorant_Garamond } from "next/font/google";
 import { Oswald } from "next/font/google";
 import styles from "./MaintenancePage.module.css";
 
-const cinzel = Cinzel({
+const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["600"],
 });
 
 const oswald = Oswald({
@@ -18,7 +18,7 @@ export function MaintenancePage() {
       <div className={styles.grain} aria-hidden="true" />
       <div className={styles.content}>
         <div className={`${styles.title} ${oswald.className}`}>Are you ready for</div>
-        <div className={`${styles.more} ${cinzel.className}`}>MORE</div>
+        <div className={`${styles.more} ${cormorantGaramond.className}`}>MORE</div>
       </div>
     </main>
   );

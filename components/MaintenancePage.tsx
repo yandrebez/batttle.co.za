@@ -1,5 +1,5 @@
 import { Cormorant_Garamond } from "next/font/google";
-import { Oswald } from "next/font/google";
+import { Bebas_Neue } from "next/font/google";
 import styles from "./MaintenancePage.module.css";
 
 const cormorantGaramond = Cormorant_Garamond({
@@ -7,9 +7,9 @@ const cormorantGaramond = Cormorant_Garamond({
   weight: ["700"],
 });
 
-const oswald = Oswald({
+const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["400"],
 });
 
 export function MaintenancePage() {
@@ -17,7 +17,7 @@ export function MaintenancePage() {
     <main className={styles.maintenance}>
       <div className={styles.grain} aria-hidden="true" />
       <div className={styles.content}>
-        <div className={`${styles.title} ${oswald.className}`}>Are you ready for</div>
+        <div className={`${styles.title} ${bebasNeue.className}`}>Are you ready for</div>
         <div className={`${styles.more} ${cormorantGaramond.className}`}>MORE</div>
       </div>
     </main>

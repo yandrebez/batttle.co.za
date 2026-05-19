@@ -37,27 +37,31 @@
   position: relative;
   z-index: 1;
   text-align: center;
+  width: min(100%, 1100px);
   max-width: 100%;
-  padding: 0 2rem;
+  padding: 0 clamp(1rem, 4vw, 2rem);
   margin-top: clamp(38vh, 44vh, 52vh);
   pointer-events: auto;
 }
 
 .title {
-  font-size: clamp(2.4rem, 5vw, 4.9rem);
+  font-size: clamp(1.9rem, 4.8vw, 4.2rem);
   font-weight: 700;
   margin: 0 0 0.8rem 0;
   letter-spacing: 0.01em;
   text-transform: none;
   color: #4d4e52;
   line-height: 1.2;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   user-select: none;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 2px 4px rgba(0, 0, 0, 0.55);
 }
 
 .more {
   font-size: clamp(3.8rem, 8.2vw, 7.6rem);
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
   letter-spacing: 0.22em;
   padding-left: 0.22em;

@@ -4,7 +4,7 @@ import styles from "./MaintenancePage.module.css";
 
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["600"],
+  weight: ["700"],
 });
 
 const oswald = Oswald({

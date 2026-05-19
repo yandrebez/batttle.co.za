@@ -1,24 +1,19 @@
-import { Cormorant_Garamond } from "next/font/google";
-import { Bebas_Neue } from "next/font/google";
+import Image from "next/image";
 import styles from "./MaintenancePage.module.css";
-
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["700"],
-});
-
-const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  weight: ["400"],
-});
 
 export function MaintenancePage() {
   return (
     <main className={styles.maintenance}>
       <div className={styles.grain} aria-hidden="true" />
       <div className={styles.content}>
-        <div className={`${styles.title} ${bebasNeue.className}`}>Are you ready for</div>
-        <div className={`${styles.more} ${cormorantGaramond.className}`} data-text="MORE">MORE</div>
+        <Image
+          src="/maintenance-words.png"
+          alt="Are you ready for MORE"
+          width={1100}
+          height={420}
+          priority
+          className={styles.wordsImage}
+        />
       </div>
     </main>
   );

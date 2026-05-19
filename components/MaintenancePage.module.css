@@ -55,77 +55,18 @@
   pointer-events: auto;
 }
 
-.title {
-  font-size: clamp(1.35rem, 4.4vw, 3.8rem);
-  font-weight: 400;
-  margin: 0 0 0.8rem 0;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: #4d4e52;
-  line-height: 1.2;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
-  white-space: nowrap;
-  overflow-wrap: normal;
+.wordsImage {
+  width: min(82vw, 520px);
+  height: auto;
+  object-fit: contain;
   user-select: none;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 2px 4px rgba(0, 0, 0, 0.55);
-}
-
-.more {
-  position: relative;
-  display: inline-block;
-  isolation: isolate;
-  font-size: clamp(3.8rem, 8.2vw, 7.6rem);
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: 0.22em;
-  padding-left: 0.22em;
-  text-transform: uppercase;
-  color: #23242a;
-  line-height: 1;
-  user-select: none;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04),
-    0 2px 0 rgba(12, 12, 14, 0.96),
-    0 8px 14px rgba(0, 0, 0, 0.62);
-}
-
-.more::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  color: transparent;
   pointer-events: none;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.11) 0,
-      rgba(255, 255, 255, 0.11) 1px,
-      rgba(0, 0, 0, 0.06) 1px,
-      rgba(0, 0, 0, 0.06) 3px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.13) 0,
-      rgba(255, 255, 255, 0.13) 1px,
-      rgba(0, 0, 0, 0.08) 1px,
-      rgba(0, 0, 0, 0.08) 4px
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(0, 0, 0, 0.2) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  mix-blend-mode: overlay;
-  opacity: 0.56;
+  filter: brightness(0.9) contrast(1.05);
 }
 
 @media (max-width: 1024px) {
-  .title {
-    font-size: clamp(1.1rem, 5.2vw, 2.7rem);
-  }
-
-  .more {
-    font-size: clamp(3.5rem, 10vw, 6rem);
+  .wordsImage {
+    width: min(86vw, 500px);
   }
 }
 
@@ -134,15 +75,8 @@
     margin-top: 46vh;
   }
 
-  .title {
-    font-size: clamp(0.95rem, 6.8vw, 1.95rem);
-    margin-bottom: 0.6rem;
-  }
-
-  .more {
-    font-size: clamp(3rem, 13vw, 4.2rem);
-    letter-spacing: 0.18em;
-    padding-left: 0.18em;
+  .wordsImage {
+    width: min(90vw, 420px);
   }
 }
 
@@ -151,14 +85,7 @@
     margin-top: 47vh;
   }
 
-  .title {
-    font-size: clamp(0.82rem, 6.3vw, 1.45rem);
-    margin-bottom: 0.55rem;
-  }
-
-  .more {
-    font-size: clamp(2.85rem, 12.5vw, 3.5rem);
-    letter-spacing: 0.16em;
-    padding-left: 0.16em;
+  .wordsImage {
+    width: min(92vw, 360px);
   }
 }

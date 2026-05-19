@@ -18,7 +18,7 @@ export function MaintenancePage() {
       <div className={styles.grain} aria-hidden="true" />
       <div className={styles.content}>
         <div className={`${styles.title} ${bebasNeue.className}`}>Are you ready for</div>
-        <div className={`${styles.more} ${cormorantGaramond.className}`}>MORE</div>
+        <div className={`${styles.more} ${cormorantGaramond.className}`} data-text="MORE">MORE</div>
       </div>
     </main>
   );

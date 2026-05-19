@@ -65,6 +65,9 @@
 }
 
 .more {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
   font-size: clamp(3.8rem, 8.2vw, 7.6rem);
   font-weight: 800;
   margin: 0;
@@ -78,6 +81,27 @@
     0 1px 0 rgba(255, 255, 255, 0.03),
     0 2px 0 rgba(16, 16, 18, 0.95),
     0 6px 12px rgba(0, 0, 0, 0.6);
+}
+
+.more::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      95deg,
+      rgba(255, 255, 255, 0.16) 0,
+      rgba(255, 255, 255, 0.16) 1px,
+      rgba(0, 0, 0, 0.05) 1px,
+      rgba(0, 0, 0, 0.05) 3px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(0, 0, 0, 0.18) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  mix-blend-mode: soft-light;
+  opacity: 0.48;
 }
 
 @media (max-width: 1024px) {

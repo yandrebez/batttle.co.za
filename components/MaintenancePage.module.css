@@ -8,7 +8,7 @@
   align-items: flex-start;
   justify-content: center;
   background:
-    radial-gradient(120% 85% at 50% 48%, #141418 0%, #0d0d11 44%, #07070b 100%);
+    radial-gradient(120% 92% at 50% 46%, #121217 0%, #0b0b10 42%, #07070c 100%);
   color: #666666;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
   padding: 0;
@@ -21,16 +21,24 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.6)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.62)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.014) 0,
+      rgba(255, 255, 255, 0.014) 1px,
+      rgba(0, 0, 0, 0.016) 1px,
+      rgba(0, 0, 0, 0.016) 3px
+    ),
     repeating-linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.018) 0,
       rgba(255, 255, 255, 0.018) 1px,
-      rgba(0, 0, 0, 0) 1px,
-      rgba(0, 0, 0, 0) 4px
-    );
-  mix-blend-mode: soft-light;
-  opacity: 0.75;
+      rgba(0, 0, 0, 0.022) 1px,
+      rgba(0, 0, 0, 0.022) 4px
+    ),
+    radial-gradient(140% 100% at 50% 50%, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.2));
+  mix-blend-mode: overlay;
+  opacity: 0.9;
 }
 
 .content {
@@ -78,9 +86,9 @@
   line-height: 1;
   user-select: none;
   text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.03),
-    0 2px 0 rgba(16, 16, 18, 0.95),
-    0 6px 12px rgba(0, 0, 0, 0.6);
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 0 rgba(12, 12, 14, 0.96),
+    0 8px 14px rgba(0, 0, 0, 0.62);
 }
 
 .more::after {
@@ -91,17 +99,24 @@
   pointer-events: none;
   background:
     repeating-linear-gradient(
-      95deg,
-      rgba(255, 255, 255, 0.16) 0,
-      rgba(255, 255, 255, 0.16) 1px,
-      rgba(0, 0, 0, 0.05) 1px,
-      rgba(0, 0, 0, 0.05) 3px
+      0deg,
+      rgba(255, 255, 255, 0.11) 0,
+      rgba(255, 255, 255, 0.11) 1px,
+      rgba(0, 0, 0, 0.06) 1px,
+      rgba(0, 0, 0, 0.06) 3px
     ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(0, 0, 0, 0.18) 100%);
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.13) 0,
+      rgba(255, 255, 255, 0.13) 1px,
+      rgba(0, 0, 0, 0.08) 1px,
+      rgba(0, 0, 0, 0.08) 4px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(0, 0, 0, 0.2) 100%);
   -webkit-background-clip: text;
   background-clip: text;
-  mix-blend-mode: soft-light;
-  opacity: 0.48;
+  mix-blend-mode: overlay;
+  opacity: 0.56;
 }
 
 @media (max-width: 1024px) {

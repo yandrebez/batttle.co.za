@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BATTTLE crown icon">
+  <rect width="512" height="512" fill="#a0131d" />
+
+  <g fill="#f5f5f5" transform="translate(66 118)">
+    <path d="M42 222h296c0-14-2-49-6-84-20 0-32-30-27-71-13 0-15 40-20 57-7 24-25 31-43 21-20-11-20-56-18-76h-35c0 0 2 53-17 73-16 17-39 14-50-8-9-17-8-62-8-65h-32c0 0 2 49-8 66-10 21-32 24-49 7-18-18-17-73-17-73H-7c2 42-8 71-26 74-4 34-6 68-6 79h81z"/>
+
+    <polygon points="174,118 145,176 204,176" />
+
+    <rect x="42" y="226" width="296" height="10" rx="2" />
+    <rect x="42" y="244" width="296" height="10" rx="2" />
+    <rect x="42" y="262" width="296" height="10" rx="2" />
+    <rect x="42" y="280" width="296" height="10" rx="2" />
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+.page {
+  min-height: 100%;
+  display: block;
+  padding: 0;
+  background: transparent;
+}

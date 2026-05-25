@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Are you ready for MORE</title>
+  <desc id="desc">Maintenance words graphic</desc>
+  <defs>
+    <linearGradient id="wordShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3f434c" />
+      <stop offset="52%" stop-color="#272b34" />
+      <stop offset="100%" stop-color="#171a22" />
+    </linearGradient>
+    <filter id="softEmboss" x="-20%" y="-30%" width="140%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
+      <feOffset dx="0" dy="1" result="down"/>
+      <feComposite in="down" in2="blur" operator="arithmetic" k2="-1" k3="1" result="emboss"/>
+      <feColorMatrix in="emboss" type="matrix" values="
+        0 0 0 0 0.95
+        0 0 0 0 0.97
+        0 0 0 0 1
+        0 0 0 0.16 0" result="highlight"/>
+      <feBlend mode="multiply" in="SourceGraphic" in2="highlight"/>
+    </filter>
+    <pattern id="fabric" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="transparent"/>
+      <path d="M0 0H4" stroke="rgba(255,255,255,0.10)" stroke-width="0.45"/>
+      <path d="M0 2H4" stroke="rgba(0,0,0,0.24)" stroke-width="0.45"/>
+      <path d="M0 0V4" stroke="rgba(255,255,255,0.09)" stroke-width="0.45"/>
+      <path d="M2 0V4" stroke="rgba(0,0,0,0.22)" stroke-width="0.45"/>
+    </pattern>
+    <mask id="moreMask">
+      <rect width="1200" height="430" fill="black"/>
+      <text x="600" y="318" text-anchor="middle" fill="white" font-size="164" letter-spacing="32" font-family="Cormorant Garamond, Garamond, Georgia, serif" font-weight="700">MORE</text>
+    </mask>
+  </defs>
+
+  <text x="600" y="170" text-anchor="middle" fill="#4e5158" font-size="102" letter-spacing="2" font-family="Bebas Neue, Impact, Haettenschweiler, Arial Narrow Bold, sans-serif" font-weight="400">Are you ready for</text>
+
+  <text x="600" y="318" text-anchor="middle" fill="url(#wordShade)" font-size="164" letter-spacing="32" font-family="Cormorant Garamond, Garamond, Georgia, serif" font-weight="700" filter="url(#softEmboss)">MORE</text>
+
+  <rect width="1200" height="430" fill="url(#fabric)" mask="url(#moreMask)" opacity="0.48"/>
+</svg>

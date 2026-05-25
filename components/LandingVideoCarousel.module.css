@@ -1,0 +1,96 @@
+.carouselWrap {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.videoPlayer {
+  width: 100%;
+  min-height: 320px;
+  max-height: 66vh;
+  display: block;
+  object-fit: contain;
+  background: #0f172a;
+}
+
+.carouselButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carouselButtonPrev {
+  left: 12px;
+}
+
+.carouselButtonNext {
+  right: 12px;
+}
+
+.carouselDots {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.dotActive {
+  background: #ffffff;
+}
+
+.videoPlaceholder {
+  border-radius: 18px;
+  border: 1px solid #dbe2ea;
+  background: #f5f7fa;
+  padding: 24px;
+  display: grid;
+  gap: 10px;
+  min-height: 240px;
+  align-content: center;
+}
+
+.placeholderTag {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.videoPlaceholder p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .videoPlayer {
+    min-height: 220px;
+  }
+}

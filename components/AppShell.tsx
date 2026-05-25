@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { SideMenu } from "@/components/SideMenu";
 import type { CSSProperties } from "react";
 import { APP_VERSION_LABEL } from "@/lib/version";
 
 type AppShellProps = {
   children: React.ReactNode;
+  initialMaintenanceMode?: boolean;
 };
 
 const MENU_OPEN_KEY = "battle_menu_open";
@@ -17,38 +17,36 @@ type ShellSettings = {
   menuBackgroundColor: string;
   headerRowColor: string;
   logoUrl: string;
+  maintenanceMode: boolean;
 };
 
 const defaultShellSettings: ShellSettings = {
   menuBackgroundColor: "#ffffff",
   headerRowColor: "#ffffff",
   logoUrl: "",
+  maintenanceMode: false,
 };
 
-export function AppShell({ children }: AppShellProps) {
-  const pathname = usePathname();
-  const isLandingPage = pathname === "/";
-
+export function AppShell({ children, initialMaintenanceMode = false }: AppShellProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(true);
-  const [shellSettings, setShellSettings] = useState<ShellSettings>(defaultShellSettings);
+  const [shellSettings, setShellSettings] = useState<ShellSettings>({
+    ...defaultShellSettings,
+    maintenanceMode: initialMaintenanceMode,
+  });
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     const stored = window.localStorage.getItem(MENU_OPEN_KEY);
     if (stored === "0") {
-      setIsMenuOpen(false);
+      window.setTimeout(() => {
+        setIsMenuOpen(false);
+      }, 0);
     }
-  }, []);
 
-  useEffect(() => {
     let isMounted = true;
 
     const loadSettings = async () => {
       try {
-        const response = await fetch("/api/settings");
+        const response = await fetch("/api/settings", { cache: "no-store" });
         const data = (await response.json()) as {
           settings?: Partial<ShellSettings>;
         };
@@ -72,7 +70,12 @@ export function AppShell({ children }: AppShellProps) {
             ? data.settings.logoUrl.trim()
             : defaultShellSettings.logoUrl;
 
-        setShellSettings({ menuBackgroundColor, headerRowColor, logoUrl });
+        const maintenanceMode =
+          typeof data.settings.maintenanceMode === "boolean"
+            ? data.settings.maintenanceMode
+            : defaultShellSettings.maintenanceMode;
+
+        setShellSettings({ menuBackgroundColor, headerRowColor, logoUrl, maintenanceMode });
       } catch {
         // Keep defaults on any fetch failure.
       }
@@ -98,55 +101,42 @@ export function AppShell({ children }: AppShellProps) {
     }
   };
 
-  if (isLandingPage) {
-    return (
-      <div className="appShell landingShell" style={shellStyle}>
-        <div className="contentShell">
-          <main className="workspace">
-            <div className="workspaceInner">{children}</div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={`appShell ${isMenuOpen ? "menuOpen" : "menuClosed"}`} style={shellStyle}>
       <SideMenu />
 
       <div className="contentShell">
-        <header className="appTopBar" aria-label="Top bar">
-          <button
-            type="button"
-            className="menuToggle menuToggleIcon"
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+        {!shellSettings.maintenanceMode && (
+          <header className="appTopBar" aria-label="Top bar">
+            <button
+              type="button"
+              className="menuToggle menuToggleIcon"
+              onClick={toggleMenu}
+              aria-label="Toggle menu"
+            >
+              <span />
+              <span />
+              <span />
+            </button>
 
-          <div className="appTopBrand">
-            <div className="appTopLogoSpot" aria-hidden="true">
-              {shellSettings.logoUrl ? (
-                <img src={shellSettings.logoUrl} alt="" className="appTopLogoImage" />
-              ) : (
-                <span className="appTopLogoFallback">B</span>
-              )}
+            <Link href="/" className="appTopBrand" aria-label="Go to home">
+              <div className="appTopLogoSpot" aria-hidden="true">
+                {shellSettings.logoUrl ? (
+                  <img src={shellSettings.logoUrl} alt="" className="appTopLogoImage" />
+                ) : (
+                  <span className="appTopLogoFallback">B</span>
+                )}
+              </div>
+              <h1 className="appTopTitle">BATTTLE <span className="appVersionTag">{APP_VERSION_LABEL}</span></h1>
+            </Link>
+
+            <div className="appTopActions">
+              <Link href="/cart" className="topCartButton" aria-label="Cart">
+                <span aria-hidden="true">🛒</span>
+              </Link>
             </div>
-            <h1 className="appTopTitle">BATTTLE <span className="appVersionTag">{APP_VERSION_LABEL}</span></h1>
-          </div>
-
-          <div className="appTopActions">
-            <Link href="/" className="topHomeButton" aria-label="Home">
-              Home
-            </Link>
-            <Link href="/cart" className="topCartButton" aria-label="Cart">
-              <span aria-hidden="true">🛒</span>
-            </Link>
-          </div>
-        </header>
+          </header>
+        )}
 
         <main className="workspace">
           <div className="workspaceInner">{children}</div>

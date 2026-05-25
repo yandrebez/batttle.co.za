@@ -5,6 +5,8 @@
 }
 
 .container {
+  max-width: 1180px;
+  margin: 0 auto;
   width: 100%;
   background: transparent;
   border: 0;
@@ -12,12 +14,12 @@
   box-shadow: none;
   padding: 0;
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
 .header {
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .header h1 {
@@ -34,9 +36,9 @@
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   border-bottom: 1px solid #dbe4ee;
-  padding: 0 0 12px;
+  padding: 0 0 14px;
 }
 
 .tab {
@@ -57,7 +59,7 @@
 
 .panel {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .cardGrid {
@@ -94,7 +96,7 @@
 
 .list {
   border: 1px solid #dce4ee;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
   overflow: hidden;
 }
@@ -151,10 +153,10 @@
 .form {
   border: 1px solid #dce4ee;
   background: #ffffff;
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 16px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .sectionTitle {
@@ -219,19 +221,23 @@
 
 .videoPreviewWrap {
   width: 100%;
-  max-width: 620px;
-  aspect-ratio: 16 / 9;
+  max-width: 720px;
+  display: grid;
+  gap: 10px;
   border: 1px solid #dce4ee;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: auto;
   background: #ffffff;
+  padding: 8px;
 }
 
 .videoPreview {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  min-height: 220px;
+  object-fit: contain;
   display: block;
+  border-radius: 8px;
+  background: #0f172a;
 }
 
 .logoPreviewWrap {
@@ -447,9 +453,37 @@
   gap: 10px;
 }
 
+.settingsTabsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settingsTab {
+  border: 1px solid #d7dfeb;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settingsTabActive {
+  background: #0b63c5;
+  border-color: #0b63c5;
+  color: #ffffff;
+}
+
+.settingsPanel {
+  display: grid;
+  gap: 12px;
+}
+
 .settingsSection {
   border: 1px solid #dce4ee;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
   overflow: hidden;
 }
@@ -473,9 +507,9 @@
 }
 
 .settingsSectionBody {
-  padding: 12px;
+  padding: 16px;
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .settingsColorGrid {
@@ -525,4 +559,12 @@
   font-weight: 700;
   color: #0f172a;
   background: #f8fbff;
+}
+
+.videoUrlCell {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

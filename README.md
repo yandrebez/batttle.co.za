@@ -60,3 +60,16 @@ Default shipping prices are configured in `lib/shipping.ts`:
 - PUDO Pickup: `60`
 
 These are applied in checkout UI and enforced again server-side before payment.
+
+## Site Settings Isolation
+
+If local development and production use the same database, set different settings rows per environment:
+
+```bash
+# Optional override. Defaults:
+# - production: 1
+# - non-production (localhost/dev): 2
+SITE_SETTINGS_ROW_ID="2"
+```
+
+This keeps admin "Site Settings" changes in localhost from affecting production.

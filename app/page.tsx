@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { ProductCatalog } from "@/components/ProductCatalog";
+import { LandingVideoCarousel } from "@/components/LandingVideoCarousel";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { APP_VERSION_LABEL } from "@/lib/version";
 import { MaintenancePage } from "@/components/MaintenancePage";
@@ -15,49 +16,42 @@ export default async function Home() {
     return <MaintenancePage />;
   }
 
-  const pageStyle = { "--landing-bg-base": settings.siteBackgroundColor } as CSSProperties;
-
   return (
-    <main className={styles.page} style={pageStyle}>
-      <section className={styles.hero}>
-        <header className={styles.header}>
-          <div className={styles.logoSpot}>
-            {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt="BATTTLE logo" className={styles.logoImage} />
-            ) : (
-              <span className={styles.logoFallback}>B</span>
-            )}
-          </div>
-          <p className={styles.eyebrow}>Online Shopping, Made Easy</p>
-          <h1 className={styles.title}>BATTTLE STORE <span className={styles.versionTag}>{APP_VERSION_LABEL}</span></h1>
-          <p className={styles.subtitle}>Fast deals, trusted brands, and a clean shopping flow from browse to checkout.</p>
-          <div className={styles.actions}>
-            <Link href="/shop" className={styles.shopButton}>
-              Shop now
-            </Link>
-            <Link href="/profile" className={styles.secondaryButton}>
-              My account
-            </Link>
-          </div>
-        </header>
+    <main id="landing-top" className={styles.page}>
+      <div className={styles.shell}>
+        <section id="home" className={styles.hero}>
+          <div className={styles.copyColumn}>
+            <p className={styles.eyebrow}>Online Shopping, Made Sharper</p>
+            <h1 className={styles.title}>
+              BATTTLE STORE <span className={styles.versionTag}>{APP_VERSION_LABEL}</span>
+            </h1>
+            <p className={styles.subtitle}>
+              One continuous storefront flow. Scroll and use menu anchors to move through sections instantly.
+            </p>
 
-        <section className={styles.mediaSection}>
-          {settings.landingVideoUrl ? (
-            <video
-              key={settings.landingVideoUrl}
-              src={settings.landingVideoUrl}
-              className={styles.videoPlayer}
-              controls
-              muted
-              loop
-              playsInline
-              preload="metadata"
-            />
-          ) : (
-            <div className={styles.videoPlaceholder}>Featured campaign video appears here.</div>
-          )}
+            <div className={styles.actions}>
+              <Link href="#products" className={styles.shopButton}>
+                Explore products
+              </Link>
+              <Link href="/profile" className={styles.secondaryButton}>
+                Account
+              </Link>
+            </div>
+          </div>
         </section>
-      </section>
+
+        <section id="media" className={styles.mediaSection}>
+          <LandingVideoCarousel rawVideoValue={settings.landingVideoUrl} />
+        </section>
+
+        <ProductCatalog
+          sectionId="products"
+          eyebrow="Latest Drop"
+          title="Shop the Catalog"
+          description="Scroll straight into the live store inventory, then tap the BATTTLE logo any time to jump back to the landing section."
+          variant="landing"
+        />
+      </div>
     </main>
   );
 }

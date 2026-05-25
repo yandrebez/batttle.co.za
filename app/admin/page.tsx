@@ -6,6 +6,7 @@ import { Spinner } from "@/components/Spinner";
 import { useAuth } from "@/lib/useAuth";
 import { CURRENCIES } from "@/lib/currency";
 import { useCurrencySymbol } from "@/components/CurrencyProvider";
+import { parseLandingVideoUrls, serializeLandingVideoUrls } from "@/lib/landingVideos";
 import styles from "./page.module.css";
 
 type AdminTab = "products" | "orders" | "clients" | "settings";
@@ -124,6 +125,35 @@ type SettingsSection = "landing" | "discounts" | "appearance" | "admins" | "main
 const orderStatuses = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 const deliveryStatuses = ["UNASSIGNED", "ASSIGNED", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
 
+function mergeLandingVideos(existingRaw: string, nextUrl: string): string {
+  const merged = [...parseLandingVideoUrls(existingRaw), nextUrl]
+    .map((entry) => entry.trim())
+    .filter((entry, index, arr) => entry && arr.indexOf(entry) === index);
+  return serializeLandingVideoUrls(merged);
+}
+
+function removeLandingVideoAt(existingRaw: string, indexToRemove: number): string {
+  const cleaned = parseLandingVideoUrls(existingRaw).filter((_, index) => index !== indexToRemove);
+  return serializeLandingVideoUrls(cleaned);
+}
+
+function upsertLandingVideoAt(existingRaw: string, url: string, indexToUpdate: number | null): string {
+  const normalized = url.trim();
+  if (!normalized) {
+    return existingRaw;
+  }
+
+  const current = parseLandingVideoUrls(existingRaw);
+  if (indexToUpdate !== null && indexToUpdate >= 0 && indexToUpdate < current.length) {
+    current[indexToUpdate] = normalized;
+  } else {
+    current.push(normalized);
+  }
+
+  const deduped = current.filter((entry, index, arr) => arr.indexOf(entry) === index);
+  return serializeLandingVideoUrls(deduped);
+}
+
 async function compressImageToDataUrl(file: File): Promise<string> {
   const source = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -222,7 +252,19 @@ export default function AdminPage() {
   const [productForm, setProductForm] = useState<ProductFormState>(initialProductForm);
   const [siteSettingsForm, setSiteSettingsForm] = useState<SiteSettingsFormState>(initialSiteSettingsForm);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
-  const [openSettingsSection, setOpenSettingsSection] = useState<SettingsSection>("landing");
+  const [activeSettingsTab, setActiveSettingsTab] = useState<SettingsSection>("landing");
+  const [landingVideoDraft, setLandingVideoDraft] = useState("");
+  const [editingLandingVideoIndex, setEditingLandingVideoIndex] = useState<number | null>(null);
+  const [isLandingVideoModalOpen, setIsLandingVideoModalOpen] = useState(false);
+  const [landingVideoDeleteIndex, setLandingVideoDeleteIndex] = useState<number | null>(null);
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [discountDeleteTarget, setDiscountDeleteTarget] = useState<DiscountCodeRow | null>(null);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminDeleteTarget, setAdminDeleteTarget] = useState<AdminUser | null>(null);
+  const landingVideos = useMemo(
+    () => parseLandingVideoUrls(siteSettingsForm.landingVideoUrl),
+    [siteSettingsForm.landingVideoUrl],
+  );
 
   const isCurrentTabLoading =
     isBusy &&
@@ -411,6 +453,22 @@ export default function AdminPage() {
     setForm(initialForm);
   };
 
+  const openCreateAdminModal = () => {
+    resetForm();
+    setIsAdminModalOpen(true);
+  };
+
+  const openEditAdminModal = (admin: AdminUser) => {
+    setEditingAdminId(admin.id);
+    setForm({ email: admin.email, name: admin.name || "", password: "" });
+    setIsAdminModalOpen(true);
+  };
+
+  const closeAdminModal = () => {
+    setIsAdminModalOpen(false);
+    resetForm();
+  };
+
   const resetProductForm = () => {
     setEditingProductId(null);
     setProductForm(initialProductForm);
@@ -546,7 +604,7 @@ export default function AdminPage() {
       }
 
       setAdmins(refreshedData.admins || []);
-      resetForm();
+      closeAdminModal();
       setNotice(isEdit ? "Admin updated." : "Admin created.");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Admin save failed.");
@@ -755,6 +813,22 @@ export default function AdminPage() {
     setDiscountForm({ code: "", percent: 10, isActive: true });
   };
 
+  const openCreateDiscountModal = () => {
+    resetDiscountForm();
+    setIsDiscountModalOpen(true);
+  };
+
+  const openEditDiscountModal = (codeRow: DiscountCodeRow) => {
+    setEditingDiscountId(codeRow.id);
+    setDiscountForm({ code: codeRow.code, percent: codeRow.percent, isActive: codeRow.isActive });
+    setIsDiscountModalOpen(true);
+  };
+
+  const closeDiscountModal = () => {
+    setIsDiscountModalOpen(false);
+    resetDiscountForm();
+  };
+
   const saveDiscountCode = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
@@ -798,7 +872,7 @@ export default function AdminPage() {
         setDiscountCodes((prev) => [payload.code!, ...prev]);
       }
 
-      resetDiscountForm();
+      closeDiscountModal();
       setNotice(isEdit ? "Discount code updated." : "Discount code created.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Discount save failed.");
@@ -871,7 +945,10 @@ export default function AdminPage() {
         throw new Error(data.message || "Failed to upload landing video.");
       }
 
-      setSiteSettingsForm((prev) => ({ ...prev, landingVideoUrl: data.videoUrl || "" }));
+      setSiteSettingsForm((prev) => ({
+        ...prev,
+        landingVideoUrl: mergeLandingVideos(prev.landingVideoUrl, data.videoUrl || ""),
+      }));
       setNotice("Video uploaded. Click Save Site Settings to publish it.");
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Video upload failed.");
@@ -901,6 +978,44 @@ export default function AdminPage() {
       setIsBusy(false);
       event.target.value = "";
     }
+  };
+
+  const openCreateLandingVideoModal = () => {
+    setLandingVideoDraft("");
+    setEditingLandingVideoIndex(null);
+    setIsLandingVideoModalOpen(true);
+  };
+
+  const startLandingVideoEdit = (index: number) => {
+    setLandingVideoDraft(landingVideos[index] || "");
+    setEditingLandingVideoIndex(index);
+    setIsLandingVideoModalOpen(true);
+  };
+
+  const closeLandingVideoModal = () => {
+    setLandingVideoDraft("");
+    setEditingLandingVideoIndex(null);
+    setIsLandingVideoModalOpen(false);
+  };
+
+  const saveLandingVideoDraft = () => {
+    if (!landingVideoDraft.trim()) {
+      setError("Please enter a landing video URL.");
+      return;
+    }
+
+    setSiteSettingsForm((prev) => ({
+      ...prev,
+      landingVideoUrl: upsertLandingVideoAt(prev.landingVideoUrl, landingVideoDraft, editingLandingVideoIndex),
+    }));
+    closeLandingVideoModal();
+  };
+
+  const deleteLandingVideo = (index: number) => {
+    setSiteSettingsForm((prev) => ({
+      ...prev,
+      landingVideoUrl: removeLandingVideoAt(prev.landingVideoUrl, index),
+    }));
   };
 
   const submitSiteSettingsForm = async (event: FormEvent) => {
@@ -1438,452 +1553,222 @@ export default function AdminPage() {
 
           {activeTab === "settings" ? (
             <>
-              <p className={styles.muted}>Click a settings tab below to open and edit that section.</p>
+              <p className={styles.muted}>Each settings area now has its own tab and grid workflows.</p>
 
-              <div className={styles.settingsAccordion}>
-                <section className={styles.settingsSection}>
-                  <button
-                    type="button"
-                    className={`${styles.settingsSectionButton} ${openSettingsSection === "landing" ? styles.settingsSectionButtonOpen : ""}`}
-                    onClick={() => setOpenSettingsSection((prev) => (prev === "landing" ? "discounts" : "landing"))}
-                  >
-                    Landing Settings
-                  </button>
-                  {openSettingsSection === "landing" ? (
-                    <div className={styles.settingsSectionBody}>
-                      <form className={styles.form} onSubmit={submitSiteSettingsForm}>
-                        <div className={styles.formRow}>
-                          <label htmlFor="logoUpload">Upload Logo</label>
-                          <input
-                            id="logoUpload"
-                            type="file"
-                            accept="image/*"
-                            onChange={uploadLogoImage}
-                            disabled={isUploadingVideo || isBusy}
-                          />
-                          <p className={styles.muted}>Recommended: square PNG/JPG, max ~700px.</p>
-                        </div>
-
-                        <div className={styles.formRow}>
-                          <label htmlFor="logoUrl">Logo URL</label>
-                          <input
-                            id="logoUrl"
-                            type="text"
-                            placeholder="/uploads/logo.png or data:image/..."
-                            value={siteSettingsForm.logoUrl}
-                            onChange={(event) =>
-                              setSiteSettingsForm((prev) => ({ ...prev, logoUrl: event.target.value }))
-                            }
-                          />
-                        </div>
-
-                        {siteSettingsForm.logoUrl ? (
-                          <div className={styles.logoPreviewWrap}>
-                            <img src={siteSettingsForm.logoUrl} alt="Store logo preview" className={styles.logoPreview} />
-                          </div>
-                        ) : null}
-
-                        <div className={styles.formRow}>
-                          <label htmlFor="landingVideoUpload">Upload Landing Video</label>
-                          <input
-                            id="landingVideoUpload"
-                            type="file"
-                            accept="video/mp4,video/webm,video/ogg"
-                            onChange={uploadLandingVideo}
-                            disabled={isUploadingVideo || isBusy}
-                          />
-                          <p className={styles.muted}>Accepted formats: MP4, WebM, OGG. Max size: 25MB.</p>
-                        </div>
-
-                        <div className={styles.formRow}>
-                          <label htmlFor="landingVideoUrl">Landing Video URL</label>
-                          <input
-                            id="landingVideoUrl"
-                            type="url"
-                            placeholder="/uploads/landing-video.mp4"
-                            value={siteSettingsForm.landingVideoUrl}
-                            onChange={(event) =>
-                              setSiteSettingsForm((prev) => ({ ...prev, landingVideoUrl: event.target.value }))
-                            }
-                          />
-                        </div>
-
-                        {siteSettingsForm.landingVideoUrl ? (
-                          <div className={styles.videoPreviewWrap}>
-                            <video
-                              key={siteSettingsForm.landingVideoUrl}
-                              src={siteSettingsForm.landingVideoUrl}
-                              className={styles.videoPreview}
-                              controls
-                              muted
-                              playsInline
-                              preload="metadata"
-                            />
-                          </div>
-                        ) : null}
-
-                        <div className={styles.formActions}>
-                          <button type="submit" className={styles.submit} disabled={isBusy || isUploadingVideo}>
-                            Save Landing Settings
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.btn}
-                            onClick={() =>
-                              setSiteSettingsForm((prev) => ({
-                                ...prev,
-                                logoUrl: "",
-                                landingVideoUrl: "",
-                              }))
-                            }
-                          >
-                            Clear Logo & Video
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  ) : null}
-                </section>
-
-                <section className={styles.settingsSection}>
-                  <button
-                    type="button"
-                    className={`${styles.settingsSectionButton} ${openSettingsSection === "discounts" ? styles.settingsSectionButtonOpen : ""}`}
-                    onClick={() => setOpenSettingsSection((prev) => (prev === "discounts" ? "appearance" : "discounts"))}
-                  >
-                    Discount Codes
-                  </button>
-                  {openSettingsSection === "discounts" ? (
-                    <div className={styles.settingsSectionBody}>
-                      <form className={styles.form} onSubmit={saveDiscountCode}>
-                        <h3 className={styles.sectionTitle}>Discount Code Form</h3>
-                        <div className={styles.settingsColorGrid}>
-                          <div className={styles.formRow}>
-                            <label htmlFor="discountCode">Code</label>
-                            <input
-                              id="discountCode"
-                              type="text"
-                              value={discountForm.code}
-                              onChange={(event) =>
-                                setDiscountForm((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
-                              }
-                              placeholder="WELCOME10"
-                              required
-                            />
-                          </div>
-
-                          <div className={styles.formRow}>
-                            <label htmlFor="discountPercent">Percent</label>
-                            <input
-                              id="discountPercent"
-                              type="number"
-                              min={0}
-                              max={100}
-                              value={discountForm.percent}
-                              onChange={(event) =>
-                                setDiscountForm((prev) => ({
-                                  ...prev,
-                                  percent: Math.max(0, Math.min(100, Number(event.target.value))),
-                                }))
-                              }
-                              required
-                            />
-                          </div>
-
-                          <div className={styles.formRow}>
-                            <label htmlFor="discountIsActive">Status</label>
-                            <select
-                              id="discountIsActive"
-                              value={discountForm.isActive ? "active" : "inactive"}
-                              onChange={(event) =>
-                                setDiscountForm((prev) => ({ ...prev, isActive: event.target.value === "active" }))
-                              }
-                            >
-                              <option value="active">Active</option>
-                              <option value="inactive">Inactive</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className={styles.formActions}>
-                          <button type="submit" className={styles.submit} disabled={isBusy}>
-                            {editingDiscountId ? "Update Code" : "Add Code"}
-                          </button>
-                          {editingDiscountId ? (
-                            <button type="button" className={styles.btn} onClick={resetDiscountForm}>
-                              Cancel Edit
-                            </button>
-                          ) : null}
-                        </div>
-                      </form>
-
-                      <div className={styles.discountGridWrap}>
-                        <table className={styles.discountGrid}>
-                          <thead>
-                            <tr>
-                              <th>Code</th>
-                              <th>Percent</th>
-                              <th>Status</th>
-                              <th>Created</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {discountCodes.map((codeRow) => (
-                              <tr key={codeRow.id}>
-                                <td>{codeRow.code}</td>
-                                <td>{codeRow.percent}%</td>
-                                <td>{codeRow.isActive ? "Active" : "Inactive"}</td>
-                                <td>{new Date(codeRow.createdAt).toLocaleDateString()}</td>
-                                <td>
-                                  <div className={styles.actions}>
-                                    <button
-                                      type="button"
-                                      className={styles.btn}
-                                      onClick={() => {
-                                        setEditingDiscountId(codeRow.id);
-                                        setDiscountForm({
-                                          code: codeRow.code,
-                                          percent: codeRow.percent,
-                                          isActive: codeRow.isActive,
-                                        });
-                                      }}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={`${styles.btn} ${styles.btnDanger}`}
-                                      onClick={() => removeDiscountCode(codeRow.id)}
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                            {!discountCodes.length ? (
-                              <tr>
-                                <td colSpan={5}>No discount codes yet.</td>
-                              </tr>
-                            ) : null}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ) : null}
-                </section>
-
-                <section className={styles.settingsSection}>
-                  <button
-                    type="button"
-                    className={`${styles.settingsSectionButton} ${openSettingsSection === "appearance" ? styles.settingsSectionButtonOpen : ""}`}
-                    onClick={() => setOpenSettingsSection((prev) => (prev === "appearance" ? "admins" : "appearance"))}
-                  >
-                    Appearance Colors
-                  </button>
-                  {openSettingsSection === "appearance" ? (
-                    <div className={styles.settingsSectionBody}>
-                      <form className={styles.form} onSubmit={submitSiteSettingsForm}>
-                        <div className={styles.settingsColorGrid}>
-                          <div className={styles.formRow}>
-                            <label htmlFor="currencyCode">Store Currency</label>
-                            <select
-                              id="currencyCode"
-                              value={siteSettingsForm.currencyCode}
-                              onChange={(event) =>
-                                setSiteSettingsForm((prev) => ({ ...prev, currencyCode: event.target.value }))
-                              }
-                            >
-                              {CURRENCIES.map((c) => (
-                                <option key={c.code} value={c.code}>
-                                  {c.code} — {c.name} ({c.symbol})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className={styles.formRow}>
-                            <label htmlFor="siteBackgroundColor">Landing Background Color</label>
-                            <input
-                              id="siteBackgroundColor"
-                              type="color"
-                              value={siteSettingsForm.siteBackgroundColor}
-                              onChange={(event) =>
-                                setSiteSettingsForm((prev) => ({ ...prev, siteBackgroundColor: event.target.value }))
-                              }
-                            />
-                          </div>
-
-                          <div className={styles.formRow}>
-                            <label htmlFor="menuBackgroundColor">Menu Color</label>
-                            <input
-                              id="menuBackgroundColor"
-                              type="color"
-                              value={siteSettingsForm.menuBackgroundColor}
-                              onChange={(event) =>
-                                setSiteSettingsForm((prev) => ({ ...prev, menuBackgroundColor: event.target.value }))
-                              }
-                            />
-                          </div>
-
-                          <div className={styles.formRow}>
-                            <label htmlFor="headerRowColor">Header Row Color</label>
-                            <input
-                              id="headerRowColor"
-                              type="color"
-                              value={siteSettingsForm.headerRowColor}
-                              onChange={(event) =>
-                                setSiteSettingsForm((prev) => ({ ...prev, headerRowColor: event.target.value }))
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className={styles.formActions}>
-                          <button type="submit" className={styles.submit} disabled={isBusy || isUploadingVideo}>
-                            Save Appearance
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  ) : null}
-                </section>
-
-                <section className={styles.settingsSection}>
-                  <button
-                    type="button"
-                    className={`${styles.settingsSectionButton} ${openSettingsSection === "admins" ? styles.settingsSectionButtonOpen : ""}`}
-                    onClick={() => setOpenSettingsSection((prev) => (prev === "admins" ? "landing" : "admins"))}
-                  >
-                    Admin Accounts
-                  </button>
-                  {openSettingsSection === "admins" ? (
-                    <div className={styles.settingsSectionBody}>
-                      <p className={styles.muted}>Manage admin accounts. Permissions can be added later.</p>
-
-                      <form className={styles.form} onSubmit={submitAdminForm}>
-                        <h3 className={styles.sectionTitle}>Admin Accounts</h3>
-                        <div className={styles.formRow}>
-                          <label htmlFor="adminEmail">Admin Email</label>
-                          <input
-                            id="adminEmail"
-                            type="email"
-                            value={form.email}
-                            onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-                            required
-                          />
-                        </div>
-
-                        <div className={styles.formRow}>
-                          <label htmlFor="adminName">Admin Name</label>
-                          <input
-                            id="adminName"
-                            type="text"
-                            value={form.name}
-                            onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                          />
-                        </div>
-
-                        <div className={styles.formRow}>
-                          <label htmlFor="adminPassword">
-                            {editingAdminId ? "New Password (optional)" : "Password"}
-                          </label>
-                          <input
-                            id="adminPassword"
-                            type="password"
-                            value={form.password}
-                            onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-                            required={!editingAdminId}
-                          />
-                        </div>
-
-                        <div className={styles.formActions}>
-                          <button type="submit" className={styles.submit} disabled={isBusy}>
-                            {editingAdminId ? "Update Admin" : "Add Admin"}
-                          </button>
-                          {editingAdminId ? (
-                            <button type="button" className={styles.btn} onClick={resetForm}>
-                              Cancel Edit
-                            </button>
-                          ) : null}
-                        </div>
-                      </form>
-
-                      <div className={styles.list}>
-                        {admins.map((admin) => (
-                          <div key={admin.id} className={styles.row}>
-                            <div className={styles.rowTop}>
-                              <span className={styles.rowTitle}>{admin.name || "Admin User"}</span>
-                              <span className={styles.meta}>{new Date(admin.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <div className={styles.rowText}>{admin.email}</div>
-                            <div className={styles.actions}>
-                              <button
-                                type="button"
-                                className={styles.btn}
-                                onClick={() => {
-                                  setEditingAdminId(admin.id);
-                                  setForm({ email: admin.email, name: admin.name || "", password: "" });
-                                }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className={`${styles.btn} ${styles.btnDanger}`}
-                                onClick={() => removeAdmin(admin.id)}
-                                disabled={admin.id === user.id}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                        {!admins.length && !isBusy ? <div className={styles.row}>No admin users found.</div> : null}
-                      </div>
-                    </div>
-                  ) : null}
-                </section>
-
-                <section className={styles.settingsSection}>
-                  <button
-                    type="button"
-                    className={`${styles.settingsSectionButton} ${openSettingsSection === "maintenance" ? styles.settingsSectionButtonOpen : ""}`}
-                    onClick={() => setOpenSettingsSection((prev) => (prev === "maintenance" ? "landing" : "maintenance"))}
-                  >
-                    Maintenance Mode
-                  </button>
-                  {openSettingsSection === "maintenance" ? (
-                    <div className={styles.settingsSectionBody}>
-                      <form className={styles.form} onSubmit={submitSiteSettingsForm}>
-                        <p className={styles.muted}>Enable maintenance mode to display a maintenance page instead of the store.</p>
-                        <div className={styles.formRow}>
-                          <label htmlFor="maintenanceMode">
-                            <input
-                              id="maintenanceMode"
-                              type="checkbox"
-                              checked={siteSettingsForm.maintenanceMode}
-                              onChange={(event) =>
-                                setSiteSettingsForm((prev) => ({ ...prev, maintenanceMode: event.target.checked }))
-                              }
-                            />
-                            {" "}Enable Maintenance Mode
-                          </label>
-                          <p className={styles.muted}>
-                            When enabled, visitors will see a maintenance page instead of the store. Admin pages remain accessible.
-                          </p>
-                        </div>
-                        <div className={styles.formActions}>
-                          <button type="submit" className={styles.submit} disabled={isBusy}>
-                            Save Maintenance Settings
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  ) : null}
-                </section>
+              <div className={styles.settingsTabsRow}>
+                <button type="button" className={`${styles.settingsTab} ${activeSettingsTab === "landing" ? styles.settingsTabActive : ""}`} onClick={() => setActiveSettingsTab("landing")}>Landing</button>
+                <button type="button" className={`${styles.settingsTab} ${activeSettingsTab === "discounts" ? styles.settingsTabActive : ""}`} onClick={() => setActiveSettingsTab("discounts")}>Discounts</button>
+                <button type="button" className={`${styles.settingsTab} ${activeSettingsTab === "appearance" ? styles.settingsTabActive : ""}`} onClick={() => setActiveSettingsTab("appearance")}>Appearance</button>
+                <button type="button" className={`${styles.settingsTab} ${activeSettingsTab === "admins" ? styles.settingsTabActive : ""}`} onClick={() => setActiveSettingsTab("admins")}>Admins</button>
+                <button type="button" className={`${styles.settingsTab} ${activeSettingsTab === "maintenance" ? styles.settingsTabActive : ""}`} onClick={() => setActiveSettingsTab("maintenance")}>Maintenance</button>
               </div>
+
+              <div className={styles.settingsPanel}>
+                {activeSettingsTab === "landing" ? (
+                  <>
+                    <form className={styles.form} onSubmit={submitSiteSettingsForm}>
+                      <div className={styles.formRow}>
+                        <label htmlFor="logoUpload">Upload Logo</label>
+                        <input id="logoUpload" type="file" accept="image/*" onChange={uploadLogoImage} disabled={isUploadingVideo || isBusy} />
+                        <p className={styles.muted}>Recommended: square PNG/JPG, max ~700px.</p>
+                      </div>
+                      <div className={styles.formRow}>
+                        <label htmlFor="logoUrl">Logo URL</label>
+                        <input id="logoUrl" type="text" placeholder="/uploads/logo.png or data:image/..." value={siteSettingsForm.logoUrl} onChange={(event) => setSiteSettingsForm((prev) => ({ ...prev, logoUrl: event.target.value }))} />
+                      </div>
+                      {siteSettingsForm.logoUrl ? (
+                        <div className={styles.logoPreviewWrap}>
+                          <img src={siteSettingsForm.logoUrl} alt="Store logo preview" className={styles.logoPreview} />
+                        </div>
+                      ) : null}
+                      <div className={styles.formRow}>
+                        <label htmlFor="landingVideoUpload">Upload Landing Video</label>
+                        <input id="landingVideoUpload" type="file" accept="video/mp4,video/webm,video/ogg" onChange={uploadLandingVideo} disabled={isUploadingVideo || isBusy} />
+                        <p className={styles.muted}>Accepted formats: MP4, WebM, OGG. Max size: 25MB.</p>
+                      </div>
+                      <div className={styles.formActions}>
+                        <button type="button" className={styles.submit} onClick={openCreateLandingVideoModal} disabled={isBusy || isUploadingVideo}>Add Video</button>
+                        <button type="submit" className={styles.submit} disabled={isBusy || isUploadingVideo}>Save Landing Settings</button>
+                      </div>
+                    </form>
+
+                    <div className={styles.discountGridWrap}>
+                      <table className={styles.discountGrid}>
+                        <thead><tr><th>#</th><th>Video URL</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          {landingVideos.map((videoUrl, index) => (
+                            <tr key={`${videoUrl}-${index}`}>
+                              <td>{index + 1}</td>
+                              <td><span className={styles.videoUrlCell}>{videoUrl}</span></td>
+                              <td>
+                                <div className={styles.actions}>
+                                  <button type="button" className={styles.btn} onClick={() => startLandingVideoEdit(index)}>Edit</button>
+                                  <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => setLandingVideoDeleteIndex(index)}>Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {!landingVideos.length ? <tr><td colSpan={3}>No landing videos configured yet.</td></tr> : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : null}
+
+                {activeSettingsTab === "discounts" ? (
+                  <>
+                    <div className={styles.formActions}><button type="button" className={styles.submit} onClick={openCreateDiscountModal}>Create Discount Code</button></div>
+                    <div className={styles.discountGridWrap}>
+                      <table className={styles.discountGrid}>
+                        <thead><tr><th>Code</th><th>Percent</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          {discountCodes.map((codeRow) => (
+                            <tr key={codeRow.id}>
+                              <td>{codeRow.code}</td>
+                              <td>{codeRow.percent}%</td>
+                              <td>{codeRow.isActive ? "Active" : "Inactive"}</td>
+                              <td>{new Date(codeRow.createdAt).toLocaleDateString()}</td>
+                              <td>
+                                <div className={styles.actions}>
+                                  <button type="button" className={styles.btn} onClick={() => openEditDiscountModal(codeRow)}>Edit</button>
+                                  <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => setDiscountDeleteTarget(codeRow)}>Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {!discountCodes.length ? <tr><td colSpan={5}>No discount codes yet.</td></tr> : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : null}
+
+                {activeSettingsTab === "appearance" ? (
+                  <form className={styles.form} onSubmit={submitSiteSettingsForm}>
+                    <div className={styles.settingsColorGrid}>
+                      <div className={styles.formRow}>
+                        <label htmlFor="currencyCode">Store Currency</label>
+                        <select id="currencyCode" value={siteSettingsForm.currencyCode} onChange={(event) => setSiteSettingsForm((prev) => ({ ...prev, currencyCode: event.target.value }))}>
+                          {CURRENCIES.map((c) => (<option key={c.code} value={c.code}>{c.code} - {c.name} ({c.symbol})</option>))}
+                        </select>
+                      </div>
+                      <div className={styles.formRow}><label htmlFor="siteBackgroundColor">Landing Background Color</label><input id="siteBackgroundColor" type="color" value={siteSettingsForm.siteBackgroundColor} onChange={(event) => setSiteSettingsForm((prev) => ({ ...prev, siteBackgroundColor: event.target.value }))} /></div>
+                      <div className={styles.formRow}><label htmlFor="menuBackgroundColor">Menu Color</label><input id="menuBackgroundColor" type="color" value={siteSettingsForm.menuBackgroundColor} onChange={(event) => setSiteSettingsForm((prev) => ({ ...prev, menuBackgroundColor: event.target.value }))} /></div>
+                      <div className={styles.formRow}><label htmlFor="headerRowColor">Header Row Color</label><input id="headerRowColor" type="color" value={siteSettingsForm.headerRowColor} onChange={(event) => setSiteSettingsForm((prev) => ({ ...prev, headerRowColor: event.target.value }))} /></div>
+                    </div>
+                    <div className={styles.formActions}><button type="submit" className={styles.submit} disabled={isBusy || isUploadingVideo}>Save Appearance</button></div>
+                  </form>
+                ) : null}
+
+                {activeSettingsTab === "admins" ? (
+                  <>
+                    <div className={styles.formActions}><button type="button" className={styles.submit} onClick={openCreateAdminModal}>Create Admin</button></div>
+                    <div className={styles.discountGridWrap}>
+                      <table className={styles.discountGrid}>
+                        <thead><tr><th>Name</th><th>Email</th><th>Created</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          {admins.map((admin) => (
+                            <tr key={admin.id}>
+                              <td>{admin.name || "Admin User"}</td>
+                              <td>{admin.email}</td>
+                              <td>{new Date(admin.createdAt).toLocaleDateString()}</td>
+                              <td>
+                                <div className={styles.actions}>
+                                  <button type="button" className={styles.btn} onClick={() => openEditAdminModal(admin)}>Edit</button>
+                                  <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => setAdminDeleteTarget(admin)} disabled={admin.id === user.id}>Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {!admins.length ? <tr><td colSpan={4}>No admin users found.</td></tr> : null}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : null}
+
+                {activeSettingsTab === "maintenance" ? (
+                  <form className={styles.form} onSubmit={submitSiteSettingsForm}>
+                    <p className={styles.muted}>Enable maintenance mode to display a maintenance page instead of the store.</p>
+                    <div className={styles.formRow}>
+                      <label htmlFor="maintenanceMode"><input id="maintenanceMode" type="checkbox" checked={siteSettingsForm.maintenanceMode} onChange={(event) => setSiteSettingsForm((prev) => ({ ...prev, maintenanceMode: event.target.checked }))} /> Enable Maintenance Mode</label>
+                    </div>
+                    <div className={styles.formActions}><button type="submit" className={styles.submit} disabled={isBusy}>Save Maintenance Settings</button></div>
+                  </form>
+                ) : null}
+              </div>
+
+              {isLandingVideoModalOpen ? (
+                <div className={styles.modalBackdrop} onClick={closeLandingVideoModal}>
+                  <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.modalHeader}><h3>{editingLandingVideoIndex !== null ? "Update Landing Video" : "Add Landing Video"}</h3><button type="button" className={styles.btn} onClick={closeLandingVideoModal}>Close</button></div>
+                    <div className={styles.form}>
+                      <div className={styles.formRow}><label htmlFor="landingVideoUrlInput">Landing Video URL</label><input id="landingVideoUrlInput" type="text" value={landingVideoDraft} onChange={(event) => setLandingVideoDraft(event.target.value)} placeholder="https://... or data:video/..." /></div>
+                      <div className={styles.formActions}><button type="button" className={styles.submit} onClick={saveLandingVideoDraft}>{editingLandingVideoIndex !== null ? "Update Video" : "Add Video"}</button></div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {landingVideoDeleteIndex !== null ? (
+                <div className={styles.modalBackdrop} onClick={() => setLandingVideoDeleteIndex(null)}>
+                  <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.modalHeader}><h3>Delete Landing Video</h3><button type="button" className={styles.btn} onClick={() => setLandingVideoDeleteIndex(null)}>Close</button></div>
+                    <p className={styles.muted}>Remove video #{landingVideoDeleteIndex + 1} from the list?</p>
+                    <div className={styles.formActions}><button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => { deleteLandingVideo(landingVideoDeleteIndex); setLandingVideoDeleteIndex(null); }}>Confirm Delete</button></div>
+                  </div>
+                </div>
+              ) : null}
+
+              {isDiscountModalOpen ? (
+                <div className={styles.modalBackdrop} onClick={closeDiscountModal}>
+                  <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.modalHeader}><h3>{editingDiscountId ? "Update Discount Code" : "Create Discount Code"}</h3><button type="button" className={styles.btn} onClick={closeDiscountModal}>Close</button></div>
+                    <form className={styles.form} onSubmit={saveDiscountCode}>
+                      <div className={styles.settingsColorGrid}>
+                        <div className={styles.formRow}><label htmlFor="discountCode">Code</label><input id="discountCode" type="text" value={discountForm.code} onChange={(event) => setDiscountForm((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))} required /></div>
+                        <div className={styles.formRow}><label htmlFor="discountPercent">Percent</label><input id="discountPercent" type="number" min={0} max={100} value={discountForm.percent} onChange={(event) => setDiscountForm((prev) => ({ ...prev, percent: Math.max(0, Math.min(100, Number(event.target.value))) }))} required /></div>
+                        <div className={styles.formRow}><label htmlFor="discountIsActive">Status</label><select id="discountIsActive" value={discountForm.isActive ? "active" : "inactive"} onChange={(event) => setDiscountForm((prev) => ({ ...prev, isActive: event.target.value === "active" }))}><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+                      </div>
+                      <div className={styles.formActions}><button type="submit" className={styles.submit} disabled={isBusy}>{editingDiscountId ? "Update Code" : "Create Code"}</button></div>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+
+              {discountDeleteTarget ? (
+                <div className={styles.modalBackdrop} onClick={() => setDiscountDeleteTarget(null)}>
+                  <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.modalHeader}><h3>Delete Discount</h3><button type="button" className={styles.btn} onClick={() => setDiscountDeleteTarget(null)}>Close</button></div>
+                    <p className={styles.muted}>Delete code {discountDeleteTarget.code}?</p>
+                    <div className={styles.formActions}><button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => { removeDiscountCode(discountDeleteTarget.id); setDiscountDeleteTarget(null); }}>Confirm Delete</button></div>
+                  </div>
+                </div>
+              ) : null}
+
+              {isAdminModalOpen ? (
+                <div className={styles.modalBackdrop} onClick={closeAdminModal}>
+                  <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.modalHeader}><h3>{editingAdminId ? "Update Admin" : "Create Admin"}</h3><button type="button" className={styles.btn} onClick={closeAdminModal}>Close</button></div>
+                    <form className={styles.form} onSubmit={submitAdminForm}>
+                      <div className={styles.formRow}><label htmlFor="adminEmail">Admin Email</label><input id="adminEmail" type="email" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} required /></div>
+                      <div className={styles.formRow}><label htmlFor="adminName">Admin Name</label><input id="adminName" type="text" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} /></div>
+                      <div className={styles.formRow}><label htmlFor="adminPassword">{editingAdminId ? "New Password (optional)" : "Password"}</label><input id="adminPassword" type="password" value={form.password} onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))} required={!editingAdminId} /></div>
+                      <div className={styles.formActions}><button type="submit" className={styles.submit} disabled={isBusy}>{editingAdminId ? "Update Admin" : "Create Admin"}</button></div>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+
+              {adminDeleteTarget ? (
+                <div className={styles.modalBackdrop} onClick={() => setAdminDeleteTarget(null)}>
+                  <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+                    <div className={styles.modalHeader}><h3>Delete Admin</h3><button type="button" className={styles.btn} onClick={() => setAdminDeleteTarget(null)}>Close</button></div>
+                    <p className={styles.muted}>Delete admin account {adminDeleteTarget.email}?</p>
+                    <div className={styles.formActions}><button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={() => { removeAdmin(adminDeleteTarget.id); setAdminDeleteTarget(null); }} disabled={adminDeleteTarget.id === user.id}>Confirm Delete</button></div>
+                  </div>
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>

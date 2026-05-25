@@ -25,7 +25,15 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   maintenanceMode: false,
 };
 
-const SETTINGS_ROW_ID = 1;
+// Allow local/dev and production to keep separate settings even when using one shared DB.
+const SETTINGS_ROW_ID = (() => {
+  const override = process.env.SITE_SETTINGS_ROW_ID;
+  if (override && /^\d+$/.test(override) && Number(override) > 0) {
+    return Number(override);
+  }
+
+  return process.env.NODE_ENV === "production" ? 1 : 2;
+})();
 
 function normalizeColor(value: unknown): string {
   const color = typeof value === "string" ? value.trim() : "";
@@ -48,9 +56,15 @@ async function ensureSiteSettingsTable() {
       "menuBackgroundColor" TEXT NOT NULL DEFAULT '#ffffff',
       "headerRowColor" TEXT NOT NULL DEFAULT '#ffffff',
       "currencyCode" TEXT NOT NULL DEFAULT 'USD',
+      "maintenanceMode" BOOLEAN NOT NULL DEFAULT false,
       "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await prisma.$executeRawUnsafe(`ALTER TABLE "SiteSettings" ADD COLUMN IF NOT EXISTS "maintenanceMode" BOOLEAN NOT NULL DEFAULT false`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "SiteSettings" ADD COLUMN IF NOT EXISTS "currencyCode" TEXT NOT NULL DEFAULT 'USD'`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "SiteSettings" ADD COLUMN IF NOT EXISTS "menuBackgroundColor" TEXT NOT NULL DEFAULT '#ffffff'`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "SiteSettings" ADD COLUMN IF NOT EXISTS "headerRowColor" TEXT NOT NULL DEFAULT '#ffffff'`);
 }
 
 function normalizeSettings(parsed: Partial<SiteSettings>): SiteSettings {
@@ -98,7 +112,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     return normalizeSettings(row);
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? (error as { code?: string }).code : "";
-    if (code === "P2021") {
+    if (code === "P2021" || code === "P2022") {
       await ensureSiteSettingsTable();
       const row = await prisma.siteSettings.upsert({
         where: { id: SETTINGS_ROW_ID },
@@ -166,7 +180,7 @@ export async function updateSiteSettings(partial: Partial<SiteSettings>): Promis
     return normalizeSettings(row);
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? (error as { code?: string }).code : "";
-    if (code === "P2021") {
+    if (code === "P2021" || code === "P2022") {
       await ensureSiteSettingsTable();
       const row = await prisma.siteSettings.upsert({
         where: { id: SETTINGS_ROW_ID },

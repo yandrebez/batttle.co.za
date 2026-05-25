@@ -15,6 +15,12 @@ function readStoredUser(): AuthUser | null {
     return null;
   }
 
+  const token = window.localStorage.getItem(AUTH_KEY);
+  if (!token) {
+    window.localStorage.removeItem(USER_KEY);
+    return null;
+  }
+
   const userJson = window.localStorage.getItem(USER_KEY);
   if (!userJson) {
     return null;
@@ -36,8 +42,7 @@ function notifyAuthChanged() {
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -58,8 +63,6 @@ export function useAuth() {
 
     window.addEventListener("storage", onStorage);
     window.addEventListener(AUTH_CHANGED_EVENT, syncUserFromStorage);
-
-    setIsLoading(false);
 
     return () => {
       window.removeEventListener("storage", onStorage);
@@ -144,5 +147,5 @@ export function useAuth() {
     notifyAuthChanged();
   }, []);
 
-  return { user, isLoading, register, login, logout };
+  return { user: user ?? null, isLoading: user === undefined, register, login, logout };
 }

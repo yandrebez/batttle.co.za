@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTokenFromRequest, requireRole, verifyAccessToken } from "@/lib/auth";
 
-const MAX_VIDEO_SIZE_BYTES = 8 * 1024 * 1024;
+const MAX_VIDEO_SIZE_BYTES = 25 * 1024 * 1024;
 
 function ensureAdmin(request: NextRequest): NextResponse | null {
   const token = getTokenFromRequest(request);

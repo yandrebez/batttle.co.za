@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 
 const primaryItems = [
-  { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop" },
-  { href: "/orders", label: "Orders" },
+  { href: "/", label: "Home", isActive: (pathname: string) => pathname === "/" },
+  { href: "/#products", label: "Products", isActive: () => false },
+  { href: "/orders", label: "Orders", isActive: (pathname: string) => pathname === "/orders" },
 ];
 
 export function SideMenu() {
@@ -20,12 +20,12 @@ export function SideMenu() {
     <aside className="sideMenu" aria-label="Main navigation">
       <div className="sideMenuBrand">
         <p className="sideMenuEyebrow">Battle Store</p>
-        <h1>Control Panel</h1>
+        <h1>BATTTLE</h1>
       </div>
 
       <nav className="sideMenuNav" aria-label="Primary">
         {primaryItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.isActive(pathname);
           return (
             <Link
               key={item.href}
@@ -46,16 +46,21 @@ export function SideMenu() {
         >
           {isLoading ? "Account" : user ? "Profile" : "Sign In"}
         </Link>
+      </nav>
 
-        {isAdmin ? (
+      {isAdmin ? (
+        <>
+          <div className="sideMenuSectionLabel">Management</div>
+          <nav className="sideMenuNav" aria-label="Management">
           <Link
             href="/admin"
             className={`sideMenuLink ${pathname.startsWith("/admin") ? "sideMenuLinkActive" : ""}`}
           >
             Admin
           </Link>
-        ) : null}
-      </nav>
+          </nav>
+        </>
+      ) : null}
     </aside>
   );
 }

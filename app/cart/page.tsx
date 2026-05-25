@@ -262,7 +262,7 @@ export default function CartPage() {
         {items.length === 0 ? (
           <div className={styles.emptyState}>
             <p>Your cart is empty right now.</p>
-            <Link href="/shop">Go back to shop</Link>
+            <Link href="/#products">Go back to products</Link>
           </div>
         ) : (
           <div className={styles.itemList}>
@@ -370,7 +370,7 @@ export default function CartPage() {
         </button>
 
         <nav className={styles.links}>
-          <Link href="/shop">Back to Shop</Link>
+          <Link href="/#products">Back to Shop</Link>
           <Link href="/profile">Profile</Link>
           <Link href="/orders">Orders</Link>
         </nav>

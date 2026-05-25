@@ -3,8 +3,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 14px;
-  padding: 0;
-  background: transparent;
+  padding: 10px 0;
+  background: #000000;
 }
 
 .cartSection {
@@ -17,35 +17,30 @@
 
 .headingWrap {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 14px;
 }
 
 .eyebrow {
-  margin: 0;
-  font-size: 0.74rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-  font-weight: 700;
+  display: none;
 }
 
 .headingWrap h1 {
   margin: 0;
-  color: #111827;
+  color: #f8fafc;
   letter-spacing: -0.02em;
 }
 
 .headingWrap p {
   margin: 0;
-  color: #4b5563;
+  color: rgba(226, 232, 240, 0.82);
   font-size: 0.95rem;
 }
 
 .emptyState {
   border: 1px solid #dce4ee;
   border-radius: 10px;
-  background: #f8fbff;
+  background: #ffffff;
   padding: 18px;
   display: grid;
   gap: 10px;
@@ -62,6 +57,7 @@
   border: 1px solid #d7dfeb;
   padding: 8px 10px;
   background: #ffffff;
+  color: #0f172a;
 }
 
 .itemList {
@@ -97,7 +93,7 @@
 }
 
 .productImage {
-  opacity: 0.88;
+  opacity: 1;
 }
 
 .itemText {
@@ -120,7 +116,7 @@
 
 .itemText span {
   font-size: 0.84rem;
-  color: #1e3a8a;
+  color: #334155;
   font-weight: 600;
 }
 
@@ -128,9 +124,10 @@
   display: inline-block;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #0b63c5;
-  background: #eef6ff;
-  border-radius: 5px;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
   padding: 2px 7px;
 }
 
@@ -145,7 +142,7 @@
 }
 
 .itemRight button {
-  border: 1px solid #d7dfeb;
+  border: 1px solid #dce4ee;
   border-radius: 8px;
   background: #ffffff;
   color: #334155;
@@ -160,7 +157,6 @@
   border: 1px solid #dce4ee;
   border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
   padding: 16px;
   display: grid;
   gap: 12px;
@@ -174,8 +170,8 @@
 
 .userInfo {
   border-radius: 8px;
-  border: 1px solid #dce4ee;
-  background: #f8fbff;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
   padding: 8px 10px;
   display: grid;
   gap: 4px;
@@ -183,7 +179,7 @@
 
 .userInfo span {
   font-size: 0.75rem;
-  color: #4a6285;
+  color: #475569;
   font-weight: 600;
 }
 
@@ -197,7 +193,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #334155;
+  color: #475569;
 }
 
 .payButton {
@@ -224,7 +220,7 @@
   border: 1px solid #dce4ee;
   border-radius: 8px;
   padding: 9px 10px;
-  color: #0f172a;
+  color: #334155;
   background: #ffffff;
 }
 
@@ -232,7 +228,7 @@
   margin: 4px 0 0;
   border-radius: 8px;
   background: #ecfdf3;
-  border: 1px solid #b7ebca;
+  border: 1px solid #86efac;
   color: #166534;
   padding: 8px 10px;
   font-size: 0.85rem;
@@ -241,11 +237,11 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 9, 24, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: grid;
   place-items: center;
   padding: 16px;
-  z-index: 10;
+  z-index: 1300;
 }
 
 .modalCard {
@@ -271,7 +267,7 @@
 }
 
 .authPrompt {
-  border-bottom: 1px solid #dce4ee;
+  border-bottom: 1px solid #e2e8f0;
   padding-bottom: 12px;
   margin-bottom: 12px;
   display: grid;
@@ -281,12 +277,12 @@
 
 .authPrompt p {
   margin: 0;
-  color: #475569;
+  color: #334155;
   font-size: 0.9rem;
 }
 
 .authPrompt span {
-  color: #9ca3af;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
@@ -301,11 +297,12 @@
 }
 
 .modalHeader button {
-  border: 1px solid #d7dfeb;
+  border: 1px solid #dce4ee;
   background: #ffffff;
   border-radius: 8px;
   padding: 6px 8px;
   cursor: pointer;
+  color: #334155;
 }
 
 .form {
@@ -323,6 +320,8 @@
   border-radius: 8px;
   padding: 9px 10px;
   font-size: 0.92rem;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .select {
@@ -331,6 +330,7 @@
   padding: 9px 10px;
   font-size: 0.92rem;
   background: #ffffff;
+  color: #0f172a;
 }
 
 .error {
@@ -355,6 +355,8 @@
   padding: 8px 10px;
   font-size: 0.88rem;
   text-transform: uppercase;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .discountInput:disabled {
@@ -363,10 +365,10 @@
 }
 
 .discountApply {
-  border: 1px solid #0073e6;
+  border: 0;
   border-radius: 8px;
-  background: #ffffff;
-  color: #0073e6;
+  background: #0073e6;
+  color: #ffffff;
   font-weight: 600;
   font-size: 0.85rem;
   padding: 0 12px;
@@ -379,10 +381,10 @@
 }
 
 .discountRemove {
-  border: 1px solid #d6dce8;
+  border: 1px solid #dce4ee;
   border-radius: 8px;
   background: #ffffff;
-  color: #64748b;
+  color: #334155;
   font-size: 0.85rem;
   padding: 0 12px;
   cursor: pointer;
@@ -400,7 +402,7 @@
   align-items: center;
   border-radius: 8px;
   background: #ecfdf3;
-  border: 1px solid #bbf7d0;
+  border: 1px solid #86efac;
   color: #166534;
   font-size: 0.85rem;
   font-weight: 600;
@@ -425,11 +427,11 @@
 }
 
 .pudoSearchBtn {
-  border: 1px solid #c9d4e4;
+  border: 1px solid #dce4ee;
   border-radius: 8px;
   padding: 0 12px;
   background: #ffffff;
-  color: #0f172a;
+  color: #334155;
   font-weight: 600;
   cursor: pointer;
 }
@@ -437,9 +439,9 @@
 .pudoError {
   margin: 0;
   font-size: 0.82rem;
-  color: #b45309;
+  color: #9a3412;
   background: #fff7ed;
-  border: 1px solid #fed7aa;
+  border: 1px solid #fdba74;
   border-radius: 8px;
   padding: 6px 8px;
 }
@@ -447,9 +449,9 @@
 .pudoList {
   max-height: 220px;
   overflow: auto;
-  border: 1px solid #d6dce8;
-  border-radius: 8px;
-  background: #f8fbff;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #f8fafc;
   display: grid;
   gap: 6px;
   padding: 6px;
@@ -457,7 +459,7 @@
 
 .pudoItem {
   width: 100%;
-  border: 1px solid #d6dce8;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #ffffff;
   padding: 8px;
@@ -474,22 +476,22 @@
 
 .pudoItem span {
   font-size: 0.78rem;
-  color: #0b63c5;
+  color: #334155;
 }
 
 .pudoItem small {
   font-size: 0.74rem;
-  color: #475569;
+  color: #64748b;
 }
 
 .pudoItemActive {
-  border-color: #0b63c5;
-  background: #eef6ff;
+  border-color: #93c5fd;
+  background: #eff6ff;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .itemRight button:hover {
-    background: #f0f5ff;
+    background: rgba(255, 255, 255, 0.12);
   }
 
   .signInBtn:hover { filter: brightness(0.95); }

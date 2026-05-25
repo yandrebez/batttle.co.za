@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSiteSettings } from "@/lib/siteSettings";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const settings = await getSiteSettings();
@@ -14,6 +16,7 @@ export async function GET() {
           menuBackgroundColor: settings.menuBackgroundColor,
           headerRowColor: settings.headerRowColor,
           currencyCode: settings.currencyCode,
+          maintenanceMode: settings.maintenanceMode,
         },
       },
       { status: 200 },

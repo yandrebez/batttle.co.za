@@ -1,19 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BATTTLE Store icon">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#1e293b" />
-    </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="100%" stop-color="#22d3ee" />
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BATTTLE crown icon">
+  <rect width="512" height="512" fill="#a0131d" />
 
-  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#bg)" />
+  <g fill="#f5f5f5" transform="translate(66 118)">
+    <path d="M42 222h296c0-14-2-49-6-84-20 0-32-30-27-71-13 0-15 40-20 57-7 24-25 31-43 21-20-11-20-56-18-76h-35c0 0 2 53-17 73-16 17-39 14-50-8-9-17-8-62-8-65h-32c0 0 2 49-8 66-10 21-32 24-49 7-18-18-17-73-17-73H-7c2 42-8 71-26 74-4 34-6 68-6 79h81z"/>
 
-  <path
-    d="M156 116h124c66 0 106 30 106 80 0 34-18 58-50 70 40 10 62 36 62 76 0 56-44 94-114 94H156V116zm108 128c26 0 40-12 40-30 0-20-14-30-40-30h-28v60h28zm10 124c30 0 46-12 46-34 0-22-16-34-46-34h-38v68h38z"
-    fill="url(#accent)"
-  />
+    <polygon points="174,118 145,176 204,176" />
+
+    <rect x="42" y="226" width="296" height="10" rx="2" />
+    <rect x="42" y="244" width="296" height="10" rx="2" />
+    <rect x="42" y="262" width="296" height="10" rx="2" />
+    <rect x="42" y="280" width="296" height="10" rx="2" />
+  </g>
 </svg>
